@@ -17,7 +17,7 @@ function research_migration_mail($key, &$message, $params)
             $proposal_data = $query->execute()->fetchObject();
             $user = user_load($params['research_migration_proposal_received']['user_id']);
             $message['headers'] = $params['research_migration_proposal_received']['headers'];
-            $message['subject'] = t('[!site_name][research migration Project] Your  research migration Project proposal has been received', array(
+            $message['subject'] = t('[!site_name][Research Migration Project] Your Research Migration Project proposal has been received', array(
                 '!site_name' => variable_get('site_name', ''),
             ), array(
                 'language' => $language->language,
@@ -26,7 +26,7 @@ function research_migration_mail($key, &$message, $params)
                 'body' => t('
 Dear !user_name,
 
-We have received your  research migration Project proposal with the following details:
+We have received your Research Migration Project proposal with the following details:
 
 Full Name: ' . $proposal_data->name_title . ' ' . $proposal_data->contributor_name . '
 Email: ' . $user->mail . '
@@ -61,7 +61,7 @@ FOSSEE,IIT Bombay', array(
             $user_data = user_load($params['research_migration_proposal_disapproved']['user_id']);
             //$user = user_load($params['research_migration_proposal']['name']);
             $message['headers'] = $params['research_migration_proposal_disapproved']['headers'];
-            $message['subject'] = t('[!site_name][research migration Project] Your  research migration Project proposal has been disapproved', array(
+            $message['subject'] = t('[!site_name][Research Migration Project] Your Research Migration Project proposal has been disapproved', array(
                 '!site_name' => variable_get('site_name', ''),
             ), array(
                 'language' => $language->language,
@@ -70,7 +70,7 @@ FOSSEE,IIT Bombay', array(
                 'body' => t('
 Dear !user_name,
 
-We regret to inform you that your  research migration proposal with following details have been disapproved:
+We regret to inform you that your Research Migration proposal with following details have been disapproved:
 
 Full Name: ' . $proposal_data->name_title . ' ' . $proposal_data->contributor_name . '
 Email: ' . $user_data->mail . '
@@ -108,7 +108,7 @@ FOSSEE,IIT Bombay', array(
             $proposal_data = $query->execute()->fetchObject();
             $user_data = user_load($params['research_migration_proposal_approved']['user_id']);
             $message['headers'] = $params['research_migration_proposal_approved']['headers'];
-            $message['subject'] = t('[!site_name][research migration Project] Your  research migration Project proposal has been approved', array(
+            $message['subject'] = t('[!site_name][Research Migration Project] Your Research Migration Project proposal has been approved', array(
                 '!site_name' => variable_get('site_name', ''),
             ), array(
                 'language' => $language->language,
@@ -117,7 +117,7 @@ FOSSEE,IIT Bombay', array(
                 'body' => t('
 Dear !user_name,
 
-Your  research migration Project proposal with the following details has been approved:
+Your Research Migration Project proposal with the following details has been approved:
 
 Full Name: ' . $proposal_data->name_title . ' ' . $proposal_data->contributor_name . '
 Email: ' . $user_data->mail . '
@@ -151,7 +151,7 @@ FOSSEE,IIT Bombay', array(
             $proposal_data = $query->execute()->fetchObject();
             $user_data = user_load($params['research_migration_proposal_completed']['user_id']);
             $message['headers'] = $params['research_migration_proposal_completed']['headers'];
-            $message['subject'] = t('[!site_name][research migration Project] Your  research migration Project proposal has been completed', array(
+            $message['subject'] = t('[!site_name][Research Migration Project] Your Research Migration Project proposal has been completed', array(
                 '!site_name' => variable_get('site_name', ''),
             ), array(
                 'language' => $language->language,
@@ -160,7 +160,7 @@ FOSSEE,IIT Bombay', array(
                 'body' => t('
 Dear !user_name,
 
-Your  research migration and abstract on the following process have been completed successfully.
+Your Research Migration project and abstract on the following process have been completed successfully.
 
 Full Name: ' . $proposal_data->name_title . ' ' . $proposal_data->contributor_name . '
 Email: ' . $user_data->mail . '
@@ -189,7 +189,7 @@ FOSSEE,IIT Bombay', array(
             $proposal_data = $query->execute()->fetchObject();
             $user_data = user_load($params['research_migration_proposal_deleted']['user_id']);
             $message['headers'] = $params['research_migration_proposal_deleted']['headers'];
-            $message['subject'] = t('[!site_name][research migration Project] Your  research migration Project proposal has been deleted', array(
+            $message['subject'] = t('[!site_name][Research Migration Project] Your Research Migration Project proposal has been deleted', array(
                 '!site_name' => variable_get('site_name', ''),
             ), array(
                 'language' => $language->language,
@@ -198,7 +198,7 @@ FOSSEE,IIT Bombay', array(
                 'body' => t('
 Dear !user_name,
 
-Your  research migration Project proposal with the following details has been deleted :
+Your Research Migration Project proposal with the following details has been deleted :
 
 Full Name: ' . $proposal_data->name_title . ' ' . $proposal_data->contributor_name . '
 Email: ' . $user_data->mail . '
@@ -208,7 +208,7 @@ State: ' . $proposal_data->state . '
 Country: ' . $proposal_data->country . '
 Project Title: ' . $proposal_data->project_title . '
 
-You can propose a new research migration project.
+You can propose a new Research Migration Project.
 
 Best Wishes,
 
@@ -231,7 +231,7 @@ FOSSEE,IIT Bombay', array(
             $proposal_data = $query->execute()->fetchObject();
 
             $user = user_load($params['abstract_uploaded']['user_id']);
-            $message['subject'] = t('[!site_name][research migration Project] You have uploaded  research migration project files', array(
+            $message['subject'] = t('[!site_name][Research Migration Project] You have uploaded Research Migration Project files', array(
                 '!site_name' => variable_get('site_name', ''),
             ), array(
                 'language' => $language->language,
@@ -272,7 +272,7 @@ FOSSEE,IIT Bombay', array(
             $abs_file_name = $params['abstract_edit_file_uploaded']['abs_file'];
             $proj_file_name = $params['abstract_edit_file_uploaded']['proj_file'];
 
-            $message['subject'] = t('[!site_name][research migration Project] You have updated project files/abstract of a research migration', array(
+            $message['subject'] = t('[!site_name][Research Migration Project] You have updated project files/abstract of a research migration', array(
                 '!site_name' => variable_get('site_name', ''),
             ), array(
                 'language' => $language->language,

@@ -13,7 +13,7 @@ function research_migration_abstract_delete_project($proposal_id)
 	$proposal_data = $proposal_q->fetchObject();
 	if (!$proposal_data)
 	{
-		drupal_set_message('Invalid research migration Project.', 'error');
+		drupal_set_message('Invalid Research Migration Project.', 'error');
 		return FALSE;
 	} //!$proposal_data
 	$query = db_select('research_migration_submitted_abstracts_file');
@@ -29,7 +29,7 @@ function research_migration_abstract_delete_project($proposal_id)
 		}
 		else
 		{
-			drupal_set_message('Invalid research migration project abstract.', 'error');
+			drupal_set_message('Invalid Research Migration Project Abstract.', 'error');
 		}
 		db_delete('research_migration_submitted_abstracts_file')->condition('proposal_id', $proposal_id)->execute();
 		//!dwsim_flowsheet_delete_abstract_file($abstract_data->id)

@@ -64,7 +64,7 @@ function cfd_research_migration_abstract()
         $abstracts_query_process_filename = "File not uploaded";
     }
     $return_html .= '<strong>Contributor Name:</strong><br />' . $proposal_data->name_title . ' ' . $proposal_data->contributor_name . '<br /><br />';
-    $return_html .= '<strong>Title of the research migration Project:</strong><br />' . $proposal_data->project_title . '<br /><br />';
+    $return_html .= '<strong>Title of the Research Migration Project:</strong><br />' . $proposal_data->project_title . '<br /><br />';
     $return_html .= '<strong>Uploaded Synopsis Submission:</strong><br />' . $abstract_filename . '<br /><br />';
     $return_html .= '<strong>Uploaded Case Directory:</strong><br />' . $abstracts_query_process_filename . '<br /><br />';
     $return_html .= $url . '<br />';
@@ -113,7 +113,7 @@ function cfd_research_migration_upload_abstract_code_form($form, &$form_state)
     $form['project_title'] = array(
         '#type' => 'item',
         '#markup' => $proposal_data->project_title,
-        '#title' => t('Title of the research migration Project'),
+        '#title' => t('Title of the Research Migration Project'),
     );
     $form['contributor_name'] = array(
         '#type' => 'item',
@@ -409,7 +409,7 @@ function cfd_research_migration_edit_upload_abstract_code_form($form, &$form_sta
     $form['project_title'] = array(
         '#type' => 'item',
         '#markup' => $proposal_data->project_title,
-        '#title' => t('Title of the research migration Project'),
+        '#title' => t('Title of the Research Migration Project'),
     );
     $form['contributor_name'] = array(
         '#type' => 'item',
