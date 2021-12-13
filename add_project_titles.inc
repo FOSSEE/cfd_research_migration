@@ -22,9 +22,9 @@ function add_project_title_form($form, &$form_state)
 		'#maxlength' => 250,
 		'#required' => TRUE
 	);
-	/*$form['upload_project_title_resource_file'] = array(
+	$form['upload_project_title_resource_file'] = array(
 		'#type' => 'fieldset',
-		'#title' => t('Browse and upload the file to display with the project title'),
+		'#title' => t('Browse and upload the file to display with the project title <span style="color:#f00;">*</span>'),
 		'#collapsible' => FALSE,
 		'#collapsed' => FALSE
 	);
@@ -32,7 +32,7 @@ function add_project_title_form($form, &$form_state)
 		'#type' => 'file',
 		'#size' => 48,
 		'#description' => t('<span style="color:red;">Upload filenames with allowed extensions only. No spaces or any special characters allowed in filename.</span>') . '<br />' . t('<span style="color:red;">Allowed file extensions: ') . variable_get('list_of_available_projects_file', '') . '</span>'
-	);*/
+	);
 	$form['submit'] = array(
 		'#type' => 'submit',
 		'#value' => t('Submit')
@@ -101,7 +101,7 @@ function add_project_title_form_submit($form, &$form_state) {
 			/* uploading file */
 			if (move_uploaded_file($_FILES['files']['tmp_name'][$file_form_name], $dest_path . $result1 . '_' . $_FILES['files']['name'][$file_form_name]))
 			{
-				$query = "UPDATE {list_of_project_titles} SET filepath = :filepath WHERE id = :id";
+				$query = "UPDATE {rm_list_of_project_titles} SET filepath = :filepath WHERE id = :id";
 				$args = array(
 					":filepath" => $result1 . '_' . $_FILES['files']['name'][$file_form_name],
 					":id" => $result1

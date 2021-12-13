@@ -160,7 +160,7 @@ FOSSEE,IIT Bombay', array(
                 'body' => t('
 Dear !user_name,
 
-Your Research Migration project and abstract on the following process have been completed successfully.
+Your Research Migration Project and Synopsis on the following process have been completed successfully.
 
 Full Name: ' . $proposal_data->name_title . ' ' . $proposal_data->contributor_name . '
 Email: ' . $user_data->mail . '
@@ -241,12 +241,12 @@ FOSSEE,IIT Bombay', array(
                 'body' => t('
 Dear !user_name,
 
-You have uploaded the following Abstract and Project files:
+You have uploaded the following Synopsis and Project files:
 
 Project Title: ' . $proposal_data->project_title . '
 
 
-The abstract and project files are under review. You will be notified when it has been approved.
+The synopsis and project files are under review. You will be notified when it has been approved.
 
 Best Wishes,
 
@@ -272,7 +272,7 @@ FOSSEE,IIT Bombay', array(
             $abs_file_name = $params['abstract_edit_file_uploaded']['abs_file'];
             $proj_file_name = $params['abstract_edit_file_uploaded']['proj_file'];
 
-            $message['subject'] = t('[!site_name][Research Migration Project] You have updated project files/abstract of a research migration', array(
+            $message['subject'] = t('[!site_name][Research Migration Project] You have updated project files/synopsis of a research migration', array(
                 '!site_name' => variable_get('site_name', ''),
             ), array(
                 'language' => $language->language,
@@ -282,7 +282,7 @@ FOSSEE,IIT Bombay', array(
                 'body' => t('
 Dear !user_name,
 
-You have updated the abstract/ project files for the following research migration:
+You have updated the synopsis/ project files for the following research migration:
 
 Project Title: ' . $proposal_data->project_title . '
 

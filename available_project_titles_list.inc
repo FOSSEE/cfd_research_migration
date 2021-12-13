@@ -11,14 +11,15 @@ function list_of_available_project_titles()
 		$preference_rows[] = array(
 				$i,
 				//print_r(array_keys($case_studies_list))
-				$result->rm_project_title_name
-				// l($result->rm_project_title_name, 'research-migration-project/download/project-title-file/' .$result->id)
+				$result->rm_project_title_name, 
+				l(Download, 'research-migration-project/download/project-title-file/' .$result->id)
 				);
 			$i++;
 	}
 		$preference_header = array(
 			'No',
-			'List of available projects'
+			'List of available projects',
+			'Link to the paper'
 		);
 		$output .= theme('table', array(
 			'header' => $preference_header,
@@ -34,9 +35,9 @@ function download_research_migration_project_title_files() {
 	$query->fields('rm_list_of_project_titles');
 	$query->condition('id', $id);
 	$result = $query->execute();
-	$research_migration_project_files_list = $result->fetchObject();
-	//$directory_name = $research_migration_project_files_list->filepath;
-	$abstract_file = $research_migration_project_files_list->filepath;
+	$rm_project_files_list = $result->fetchObject();
+	//$directory_name = $case_study_project_files_list->filepath;
+	$abstract_file = $rm_project_files_list->filepath;
 	ob_clean();
 	header("Pragma: public");
 	header("Expires: 0");

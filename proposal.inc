@@ -335,22 +335,22 @@ function cfd_research_migration_proposal_form($form, &$form_state, $no_js_use = 
 	);
 	}
 	//else if ($simulation_id == 13){
-	// $form['solver_used_text'] = array(
-	// 	'#type' => 'textfield',
-	// 	'#title' => t('Enter the Solver to be used'),
-	// 	'#size' => 100,
-	// 	'#description' => t('Maximum character limit is 50'),
-	// 	//'#required' => TRUE,
-	// 	'#prefix' => '<div id="ajax-solver-text-replace">',
-	// 	'#suffix' => '</div>',
-	// 	'#states' => array(
- //                'visible' => array(
- //                    ':input[name="simulation_type"]' => array(
- //                        'value' => 13
- //                    )
- //                )
- //            ),
-	// );
+	$form['solver_used_text'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Enter the Solver to be used'),
+		'#size' => 100,
+		'#description' => t('Maximum character limit is 50'),
+		//'#required' => TRUE,
+		'#prefix' => '<div id="ajax-solver-text-replace">',
+		'#suffix' => '</div>',
+		'#states' => array(
+                'visible' => array(
+                    ':input[name="simulation_type"]' => array(
+                        'value' => 13
+                    )
+                )
+            ),
+	);
 	//}
 	$form['abstract_file'] = array(
 		'#type' => 'fieldset',
