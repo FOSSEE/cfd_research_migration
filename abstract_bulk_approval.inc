@@ -135,7 +135,7 @@ function cfd_research_migration_abstract_bulk_approval_form_submit($form, &$form
 
 Dear !user_name,
 
-Your uploaded abstract for the Research Migration project has been approved:
+Your uploaded project files for the Research Migration project has been approved.
 
 Title of Research Migration project  : ' . $user_info->project_title . '
 
