@@ -22,7 +22,17 @@ function add_project_title_form($form, &$form_state)
 		'#maxlength' => 250,
 		'#required' => TRUE
 	);
-	$form['upload_project_title_resource_file'] = array(
+	$form['project_link'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Enter the Link of the project'),
+		'#size' => 250,
+		'#attributes' => array(
+			'placeholder' => t('Enter the Link of the project displayed to the contributor')
+		),
+		'#maxlength' => 250,
+		'#required' => TRUE
+	);
+	/*$form['upload_project_title_resource_file'] = array(
 		'#type' => 'fieldset',
 		'#title' => t('Browse and upload the file to display with the project title <span style="color:#f00;">*</span>'),
 		'#collapsible' => FALSE,
@@ -32,7 +42,7 @@ function add_project_title_form($form, &$form_state)
 		'#type' => 'file',
 		'#size' => 48,
 		'#description' => t('<span style="color:red;">Upload filenames with allowed extensions only. No spaces or any special characters allowed in filename.</span>') . '<br />' . t('<span style="color:red;">Allowed file extensions: ') . variable_get('list_of_available_projects_file', '') . '</span>'
-	);
+	);*/
 	$form['submit'] = array(
 		'#type' => 'submit',
 		'#value' => t('Submit')
@@ -73,13 +83,16 @@ function add_project_title_form_submit($form, &$form_state) {
 	$v = $form_state["values"];
 	$result = "INSERT INTO {rm_list_of_project_titles}
 	(
-	rm_project_title_name
+	rm_project_title_name,
+	rm_project_link
 	)VALUES
 	(
-	:rm_project_title_name
+	:rm_project_title_name,
+	:rm_project_link
 	)";
 	$args = array(
-		":rm_project_title_name" => $v['new_project_title_name']
+		":rm_project_title_name" => $v['new_project_title_name'],
+		":rm_project_link" => $v['project_link']
 	);
 	$result1 = db_query($result, $args, array(
 		'return' => Database::RETURN_INSERT_ID

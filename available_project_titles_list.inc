@@ -11,8 +11,9 @@ function list_of_available_project_titles()
 		$preference_rows[] = array(
 				$i,
 				//print_r(array_keys($case_studies_list))
-				$result->rm_project_title_name, 
-				l(Download, 'research-migration-project/download/project-title-file/' .$result->id)
+				$result->rm_project_title_name,
+				l(Link, $result->rm_project_link , array('attributes' => array('target'=>'_blank')))
+				//l(Download, 'research-migration-project/download/project-title-file/' .$result->id)
 				);
 			$i++;
 	}
