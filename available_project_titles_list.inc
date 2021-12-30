@@ -12,7 +12,7 @@ function list_of_available_project_titles()
 				$i,
 				//print_r(array_keys($case_studies_list))
 				$result->rm_project_title_name,
-				l(Link, $result->rm_project_link , array('attributes' => array('target'=>'_blank')))
+				l('Click Here', $result->rm_project_link , array('attributes' => array('target'=>'_blank')))
 				//l(Download, 'research-migration-project/download/project-title-file/' .$result->id)
 				);
 			$i++;
