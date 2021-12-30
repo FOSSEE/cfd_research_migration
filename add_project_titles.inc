@@ -22,9 +22,19 @@ function add_project_title_form($form, &$form_state)
 		'#maxlength' => 250,
 		'#required' => TRUE
 	);
+	$form['project_link'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Enter the Link of the project'),
+		'#size' => 250,
+		'#attributes' => array(
+			'placeholder' => t('Enter the Link of the project displayed to the contributor')
+		),
+		'#maxlength' => 250,
+		'#required' => TRUE
+	);
 	/*$form['upload_project_title_resource_file'] = array(
 		'#type' => 'fieldset',
-		'#title' => t('Browse and upload the file to display with the project title'),
+		'#title' => t('Browse and upload the file to display with the project title <span style="color:#f00;">*</span>'),
 		'#collapsible' => FALSE,
 		'#collapsed' => FALSE
 	);
@@ -73,13 +83,16 @@ function add_project_title_form_submit($form, &$form_state) {
 	$v = $form_state["values"];
 	$result = "INSERT INTO {rm_list_of_project_titles}
 	(
-	rm_project_title_name
+	rm_project_title_name,
+	rm_project_link
 	)VALUES
 	(
-	:rm_project_title_name
+	:rm_project_title_name,
+	:rm_project_link
 	)";
 	$args = array(
-		":rm_project_title_name" => $v['new_project_title_name']
+		":rm_project_title_name" => $v['new_project_title_name'],
+		":rm_project_link" => $v['project_link']
 	);
 	$result1 = db_query($result, $args, array(
 		'return' => Database::RETURN_INSERT_ID
@@ -101,7 +114,7 @@ function add_project_title_form_submit($form, &$form_state) {
 			/* uploading file */
 			if (move_uploaded_file($_FILES['files']['tmp_name'][$file_form_name], $dest_path . $result1 . '_' . $_FILES['files']['name'][$file_form_name]))
 			{
-				$query = "UPDATE {list_of_project_titles} SET filepath = :filepath WHERE id = :id";
+				$query = "UPDATE {rm_list_of_project_titles} SET filepath = :filepath WHERE id = :id";
 				$args = array(
 					":filepath" => $result1 . '_' . $_FILES['files']['name'][$file_form_name],
 					":id" => $result1

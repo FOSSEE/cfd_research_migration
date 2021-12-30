@@ -20,7 +20,7 @@ function cfd_research_migration_completed_proposals_all()
 	{
 		$output .= "Work has been completed for the following research migration. We welcome your contributions." . "<hr>";
 		$preference_rows = array();
-		$i = 1;
+		$i = $result->rowCount();
 		while ($row = $result->fetchObject())
 		{
 			$proposal_id = $row->id;
@@ -41,11 +41,11 @@ function cfd_research_migration_completed_proposals_all()
 				$row->university,
 				$year
 			);
-			$i++;
+			$i--;
 		} //$row = $result->fetchObject()
 		$preference_header = array(
 			'No',
-			'research migration Project',
+			'Research Migration Project',
 			//'Solver used',
 			'Contributor Name',
 			'University/ Institute',
@@ -69,11 +69,11 @@ function cfd_research_migration_progress_all()
 	$result = $query->execute();
 	if ($result->rowCount() == 0)
 	{
-		$page_content .= "Work is in progress for the following research migration under research migration Project<hr>";
+		$page_content .= "Work is in progress for the following research migration under Research Migration Project<hr>";
 	} //$result->rowCount() == 0
 	else
 	{
-		$page_content .= "Work is in progress for the following research migration under research migration Project<hr>";
+		$page_content .= "Work is in progress for the following research migration under Research Migration Project<hr>";
 		$preference_rows = array();
 		$i = 1;
 		while ($row = $result->fetchObject())
@@ -90,7 +90,7 @@ function cfd_research_migration_progress_all()
 		} //$row = $result->fetchObject()
 		$preference_header = array(
 			'No',
-			'research migration Project',
+			'Research Migration Project',
 			'Contributor Name',
 			'Institute/ University',
 			'Year'

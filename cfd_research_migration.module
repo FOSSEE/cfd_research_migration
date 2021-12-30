@@ -124,7 +124,7 @@ function cfd_research_migration_menu()
         'file' => 'manage_proposal.inc',
     );
     $items['research-migration-project/abstract-approval/bulk'] = array(
-        'title' => 'RM Manage Code',
+        'title' => 'Research Migration Manage Code',
         'description' => 'Bulk Mangage',
         'page callback' => 'drupal_get_form',
         'page arguments' => array(
@@ -218,7 +218,7 @@ function cfd_research_migration_menu()
         'file' => 'cfd_research_migration_details.inc',
     );
     $items['research-migration-project/list-of-project-titles'] = array(
-        'title' => 'List of available Project titles',
+        'title' => 'List of available project titles',
         'page callback' => 'list_of_available_project_titles',
         'access arguments' => array(
             'Research Migration Project titles list',

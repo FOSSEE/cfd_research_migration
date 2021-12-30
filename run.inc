@@ -44,7 +44,7 @@ function cfd_research_migration_run_form($form, &$form_state)
 		);
 		$form['selected_research_migration'] = array(
 			'#type' => 'item',
-			'#markup' => '<div id="ajax_selected_research_migration">' . l('Download Abstract', "research-migration-project/download/project-file/" . $research_migration_default_value) . '<br>' . l('Download research migration', 'research-migration-project/full-download/project/' . $research_migration_default_value) . '</div>'
+			'#markup' => '<div id="ajax_selected_research_migration">' . l('Download Synopsis', "research-migration-project/download/project-file/" . $research_migration_default_value) . '<br>' . l('Download research migration', 'research-migration-project/full-download/project/' . $research_migration_default_value) . '</div>'
 		);
 	}
 	return $form;
@@ -58,7 +58,7 @@ function research_migration_project_details_callback($form, $form_state)
 		$research_migration_details = _research_migration_information($research_migration_default_value);
 		$provider = user_load($research_migration_details->uid);
 		if ($research_migration_details->uid > 0) {
-			$commands[] = ajax_command_html('#ajax_selected_research_migration', l('Download Abstract', "research-migration-project/download/project-file/" . $research_migration_default_value) . '<br>' . l('Download research migration', 'research-migration-project/full-download/project/' . $research_migration_default_value));
+			$commands[] = ajax_command_html('#ajax_selected_research_migration', l('Download Synopsis', "research-migration-project/download/project-file/" . $research_migration_default_value) . '<br>' . l('Download research migration', 'research-migration-project/full-download/project/' . $research_migration_default_value));
 		} //$research_migration_details->uid > 0
 		else {
 			$commands[] = ajax_command_html('#ajax_selected_research_migration', '');

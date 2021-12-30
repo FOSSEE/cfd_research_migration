@@ -28,7 +28,7 @@ function cfd_research_migration_proposal_form($form, &$form_state, $no_js_use = 
 	if ($user->uid == 0)
 	{
 		$msg = drupal_set_message(t('It is mandatory to ' . l('login', 'user') . ' on this website to access the Research Migration proposal form. If you are new user please create a new account first.'), 'error');
-		drupal_goto('user');
+		drupal_goto('user/login', array('query' => drupal_get_destination()));
 		return $msg;
 	} //$user->uid == 0
 	$query = db_select('research_migration_proposal');
@@ -254,6 +254,7 @@ function cfd_research_migration_proposal_form($form, &$form_state, $no_js_use = 
 			'1' => 'Yes',
 			'0' => 'No',
 			),
+			'#required' => TRUE,
             '#validated' => TRUE,
 	);
 	$form['cfd_research_migration_name_dropdown'] = array(
@@ -334,26 +335,27 @@ function cfd_research_migration_proposal_form($form, &$form_state, $no_js_use = 
 	);
 	}
 	//else if ($simulation_id == 13){
-	// $form['solver_used_text'] = array(
-	// 	'#type' => 'textfield',
-	// 	'#title' => t('Enter the Solver to be used'),
-	// 	'#size' => 100,
-	// 	'#description' => t('Maximum character limit is 50'),
-	// 	//'#required' => TRUE,
-	// 	'#prefix' => '<div id="ajax-solver-text-replace">',
-	// 	'#suffix' => '</div>',
-	// 	'#states' => array(
- //                'visible' => array(
- //                    ':input[name="simulation_type"]' => array(
- //                        'value' => 13
- //                    )
- //                )
- //            ),
-	// );
+	$form['solver_used_text'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Enter the Solver to be used'),
+		'#size' => 100,
+		'#description' => t('Maximum character limit is 50'),
+		//'#required' => TRUE,
+		'#prefix' => '<div id="ajax-solver-text-replace">',
+		'#suffix' => '</div>',
+		'#states' => array(
+                'visible' => array(
+                    ':input[name="simulation_type"]' => array(
+                        'value' => 13
+                    )
+                )
+            ),
+	);
 	//}
 	$form['abstract_file'] = array(
 		'#type' => 'fieldset',
-		'#title' => t('Synopsis Submission'),
+		'#title' => t('<span style="color:black;">Synopsis Submission</span> <span style="color:#f00;">*</span>'),
+		'#required' => TRUE,
 		'#collapsible' => FALSE,
 		'#collapsed' => FALSE
 	);
@@ -554,7 +556,7 @@ if (isset($_FILES['files']))
 	{
 		/* check if atleast one source or result file is uploaded */
 		if (!($_FILES['files']['name']['abstract_file_path']))
-			form_set_error('abstract_file_path', t('Please upload the abstract file'));
+			form_set_error('abstract_file_path', t('Please upload the Synopsis file'));
 		/* check for valid filename extensions */
 		foreach ($_FILES['files']['name'] as $file_form_name => $file_name)
 		{

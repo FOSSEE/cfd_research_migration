@@ -25,7 +25,7 @@ function cfd_research_migration_proposal_pending()
     $pending_header = array(
         'Date of Submission',
         'Student Name',
-        'Title of the research migration Project',
+        'Title of the Research Migration Project',
         'Action',
     );
     //$output = theme_table($pending_header, $pending_rows);
@@ -95,7 +95,7 @@ function cfd_research_migration_proposal_all()
     $proposal_header = array(
         'Date of Submission',
         'Student Name',
-        'Title of the research migration project',
+        'Title of the Research Migration project',
         'Date of Approval',
         'Date of Project Completion',
         'Status',
@@ -171,7 +171,7 @@ function cfd_research_migration_proposal_edit_file_all()
     $proposal_header = array(
         'Date of Submission',
         'Student Name',
-        'Title of the research migration project',
+        'Title of the Research Migration project',
         'Date of Approval',
         'Date of Project Completion',
         'Status',
@@ -304,7 +304,7 @@ function cfd_research_migration_proposal_approval_form($form, &$form_state)
     $form['project_title'] = array(
         '#type' => 'item',
         '#markup' => $proposal_data->project_title,
-        '#title' => t('Title of the research migration Project'),
+        '#title' => t('Title of the Research Migration Project'),
     );
     $form['version'] = array(
         '#type' => 'item',
@@ -612,7 +612,7 @@ function cfd_research_migration_proposal_status_form($form, &$form_state)
     $form['project_title'] = array(
         '#type' => 'item',
         '#markup' => $proposal_data->project_title,
-        '#title' => t('Title of the research migration Project'),
+        '#title' => t('Title of the Research Migration Project'),
     );
     $form['version'] = array(
         '#type' => 'item',
@@ -851,7 +851,7 @@ function cfd_research_migration_proposal_edit_form($form, &$form_state)
     );
     $form['how_did_you_know_about_project'] = array(
         '#type' => 'textfield',
-        '#title' => t('How did you come to know about the research migration Project?'),
+        '#title' => t('How did you come to know about the Research Migration Project?'),
         '#default_value' => $proposal_data->how_did_you_know_about_project,
         '#required' => true,
     );
@@ -978,7 +978,7 @@ function cfd_research_migration_proposal_edit_form($form, &$form_state)
     );
     $form['project_title'] = array(
         '#type' => 'textfield',
-        '#title' => t('Title of the research migration Project'),
+        '#title' => t('Title of the Research Migration Project'),
         '#size' => 300,
         '#maxlength' => 350,
         '#required' => true,
