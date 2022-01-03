@@ -1092,7 +1092,7 @@ function cfd_research_migration_proposal_edit_form_validate($form, $form_state){
             form_set_error('solver_used', t('Please select an option'));
         }
     }
-    else if ($form_state['values']['simulation_type'] == 13) {
+    else if ($form_state['values']['simulation_type'] == 19) {
     if ($form_state['values']['solver_used_text'] != '')
     {
         if (strlen($form_state['values']['solver_used_text']) > 100)
