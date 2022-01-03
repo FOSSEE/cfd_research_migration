@@ -247,7 +247,7 @@ function cfd_research_migration_proposal_form($form, &$form_state, $no_js_use = 
 		'#type' => 'item',
 		'#markup' => '<hr>'
 	);
-	$list_research_migration = _rm_list_of_research_migration($existing_research_migration);
+	$list_research_migration = _rm_list_of_research_migration();
 	//var_dump($list_research_migration);die;
 	if(!empty($list_research_migration))
 	{
