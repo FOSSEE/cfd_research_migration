@@ -247,7 +247,11 @@ function cfd_research_migration_proposal_form($form, &$form_state, $no_js_use = 
 		'#type' => 'item',
 		'#markup' => '<hr>'
 	);
-	/*$form['cfd_project_title_check'] = array(
+	$list_research_migration = _rm_list_of_research_migration($existing_research_migration);
+	//var_dump($list_research_migration);die;
+	if(!empty($list_research_migration))
+	{
+		$form['cfd_project_title_check'] = array(
             '#type' => 'radios',
             '#title' => t('Is the proposed CFD Research Migration from the list of available Research Migration Projects?'),
             '#options' => array(
@@ -257,7 +261,7 @@ function cfd_research_migration_proposal_form($form, &$form_state, $no_js_use = 
 			'#required' => TRUE,
             '#validated' => TRUE,
 	);
-	$form['cfd_research_migration_name_dropdown'] = array(
+		$form['cfd_research_migration_name_dropdown'] = array(
             '#type' => 'select',
             '#title' => t(' Select the name of available Research Migration Project'),
             '#required' => TRUE,
@@ -270,8 +274,8 @@ function cfd_research_migration_proposal_form($form, &$form_state, $no_js_use = 
                     )
                 )
             ),
-	);*/
-	$form['project_title'] = array(
+	);
+		$form['project_title'] = array(
 		'#type' => 'textfield',
 		'#title' => t('Title of the Research Migration Project'),
 		'#size' => 80,		
@@ -279,14 +283,27 @@ function cfd_research_migration_proposal_form($form, &$form_state, $no_js_use = 
 		'#description' => t('Maximum character limit is 250'),
 		'#required' => TRUE,
 		'#validated' => TRUE,
-		// '#states' => array(
-  //               'visible' => array(
-  //                   ':input[name="cfd_project_title_check"]' => array(
-  //                       'value' => '0'
-  //                   )
-  //               )
-  //           ),
+		'#states' => array(
+                'visible' => array(
+                    ':input[name="cfd_project_title_check"]' => array(
+                        'value' => '0'
+                    )
+                )
+            ),
 	);
+	}
+	else
+	{		
+		$form['project_title'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Title of the Research Migration Project'),
+		'#size' => 80,		
+		'#maxlength' => 250,
+		'#description' => t('Maximum character limit is 250'),
+		'#required' => TRUE,
+		'#validated' => TRUE,
+		);
+	}
 	$form['source_of_the_project'] = array(
 		'#type' => 'textfield',
 		'#title' => t('Source of the Project'),
