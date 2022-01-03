@@ -247,7 +247,7 @@ function cfd_research_migration_proposal_form($form, &$form_state, $no_js_use = 
 		'#type' => 'item',
 		'#markup' => '<hr>'
 	);
-	$form['cfd_project_title_check'] = array(
+	/*$form['cfd_project_title_check'] = array(
             '#type' => 'radios',
             '#title' => t('Is the proposed CFD Research Migration from the list of available Research Migration Projects?'),
             '#options' => array(
@@ -270,21 +270,22 @@ function cfd_research_migration_proposal_form($form, &$form_state, $no_js_use = 
                     )
                 )
             ),
-	);
+	);*/
 	$form['project_title'] = array(
-		'#type' => 'textarea',
+		'#type' => 'textfield',
 		'#title' => t('Title of the Research Migration Project'),
-		'#size' => 250,
+		'#size' => 80,		
+		'#maxlength' => 250,
 		'#description' => t('Maximum character limit is 250'),
 		'#required' => TRUE,
 		'#validated' => TRUE,
-		'#states' => array(
-                'visible' => array(
-                    ':input[name="cfd_project_title_check"]' => array(
-                        'value' => '0'
-                    )
-                )
-            ),
+		// '#states' => array(
+  //               'visible' => array(
+  //                   ':input[name="cfd_project_title_check"]' => array(
+  //                       'value' => '0'
+  //                   )
+  //               )
+  //           ),
 	);
 	$form['source_of_the_project'] = array(
 		'#type' => 'textfield',
