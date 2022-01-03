@@ -614,15 +614,13 @@ function _rm_list_of_simulation_types(){
     return $simulation_types;
 }
 
-function _rm_list_of_solvers($version_id, $simulation_id){
-    $version_id = $version_id;
+function _rm_list_of_solvers($simulation_id){
     $simulation_id = $simulation_id;
     $solvers = array(
         0 => '-Select-',
         );
     $query = db_select('research_migration_solvers');
     $query->fields('research_migration_solvers');
-    $query->condition('version_id',$version_id);
     $query->condition('simulation_type_id',$simulation_id);
     $solvers_list = $query->execute();
     while($solvers_data = $solvers_list->fetchObject()){
