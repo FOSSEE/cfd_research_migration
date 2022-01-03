@@ -984,14 +984,14 @@ function cfd_research_migration_proposal_edit_form($form, &$form_state)
         '#required' => true,
         '#default_value' => $proposal_data->project_title,
     );
-    $version_options = _cs_list_of_versions();
+    $version_options = _rm_list_of_versions();
     $form['version'] = array(
         '#type' => 'select',
         '#title' => t('Version used'),
         '#options' => $version_options,
         '#default_value' => $proposal_data->version_id
     );
-    $simulation_type_options = _cs_list_of_simulation_types();
+    $simulation_type_options = _rm_list_of_simulation_types();
     $form['simulation_type'] = array(
         '#type' => 'select',
         '#title' => t('Simulation Type used'),
@@ -1001,19 +1001,18 @@ function cfd_research_migration_proposal_edit_form($form, &$form_state)
             'callback' => 'ajax_solver_used_callback',
         ),
     );
-    $version_id = isset($form_state['values']['version']) ? $form_state['values']['version'] : $proposal_data->version_id;
     $simulation_id = isset($form_state['values']['simulation_type']) ? $form_state['values']['simulation_type'] : $proposal_data->simulation_type_id;
 
     $form['solver_used'] = array(
         '#type' => 'select',
         '#title' => t('Select the Solver to be used'),
-        '#options' => _cs_list_of_solvers($version_id, $simulation_id),
+        '#options' => _rm_list_of_solvers($simulation_id),
         '#prefix' => '<div id="ajax-solver-replace">',
         '#suffix' => '</div>',
         '#states' => array(
                 'invisible' => array(
                     ':input[name="simulation_type"]' => array(
-                        'value' => 13
+                        'value' => 19
                     )
                 )
             ),
@@ -1032,7 +1031,7 @@ function cfd_research_migration_proposal_edit_form($form, &$form_state)
         '#states' => array(
                 'visible' => array(
                     ':input[name="simulation_type"]' => array(
-                        'value' => 13
+                        'value' => 19
                     )
                 )
             ),
@@ -1068,9 +1067,8 @@ function cfd_research_migration_proposal_edit_form($form, &$form_state)
 }
 
 function ajax_solver_used_callback($form, $form_state){
-    $version_id = isset($form_state['values']['version']) ? $form_state['values']['version'] : key($version_options);
     $simulation_id = isset($form_state['values']['simulation_type']) ? $form_state['values']['simulation_type'] : key($simulation_type_options);
-    if($simulation_id < 13){
+    if($simulation_id < 19){
         $form['solver_used']['#options'] = _cs_list_of_solvers($version_id, $simulation_id);
         $form['solver_used']['#required'] = TRUE;
         $form['solver_used']['#validated'] = TRUE;
