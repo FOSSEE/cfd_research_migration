@@ -405,7 +405,7 @@ function cfd_research_migration_proposal_form($form, &$form_state, $no_js_use = 
 		'#type' => 'checkboxes',
 		'#title' => t('Terms And Conditions'),
 		'#options' => array(
-			'status' => t('<a href="/term-and-conditions/research-migration-project" target="_blank">I agree to the Terms and Conditions</a>')
+			'status' => t('<a href="/research-migration-project/term-and-conditions" target="_blank">I agree to the Terms and Conditions</a>')
 		),
 		'#required' => TRUE
 	);
