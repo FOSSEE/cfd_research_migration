@@ -1087,7 +1087,7 @@ function ajax_solver_used_callback($form, $form_state){
     );
 }
 function cfd_research_migration_proposal_edit_form_validate($form, $form_state){
-    if ($form_state['values']['simulation_type'] < 13) {
+    if ($form_state['values']['simulation_type'] < 19) {
         if($form_state['values']['solver_used'] == '0'){
             form_set_error('solver_used', t('Please select an option'));
         }
