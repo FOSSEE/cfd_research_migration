@@ -334,7 +334,7 @@ function cfd_research_migration_menu()
             'verify_certificates',
         ),
         "access arguments" => array(
-            "verify certificates",
+            "verify rm certificates",
         ),
         'type' => MENU_CALLBACK,
         'file' => 'pdf/verify_certificates.inc',
@@ -413,10 +413,10 @@ function cfd_research_migration_permission()
             "description" => t("list the mentor certificates"),
             'restrict access' => true,
         ),
-        "verify certificates" => array(
-            "title" => t("verify the certificates"),
-            "description" => t("verify the certificates"),
-            'restrict access' => true,
+        "verify rm certificates" => array(
+            "title" => t("verify the rm certificates"),
+            "description" => t("verify the rm certificates"),
+            "restrict access" => true,
         ),
 
     );
