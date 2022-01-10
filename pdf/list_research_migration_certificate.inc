@@ -9,7 +9,7 @@ function _list_research_migration_certificates()
 	//var_dump($exist_id->id);die;
 	if ($exist_id){
 	if ($exist_id->id) {
-		if ($exist_id->id < 2) {
+		if ($exist_id->id < 1) {
 			drupal_set_message('<strong>You need to propose a <a href="https://cfd.fossee.in/research-migration-project/proposal">Research Migration Proposal</a></strong> or if you have already proposed then your Research Migration is under reviewing process', 'status');
 			return '';
 		} //$exist_id->id < 3
