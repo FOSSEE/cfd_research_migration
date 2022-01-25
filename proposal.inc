@@ -338,6 +338,7 @@ function cfd_research_migration_proposal_form($form, &$form_state, $no_js_use = 
 		'#type' => 'select',
 		'#title' => t('Select the Solver to be used'),
 		'#options' => _rm_list_of_solvers($simulation_id),
+		'#default_value' => 0,
 		'#prefix' => '<div id="ajax-solver-replace">',
 		'#suffix' => '</div>',
 		'#states' => array(

@@ -13,12 +13,12 @@ function cfd_research_migration_completed_proposals_all()
 	//var_dump($research_migration_abstract);die;
 	if ($result->rowCount() == 0)
 	{
-		$output .= "Work has been completed for the following research migration. We welcome your contributions." ."<hr>";
+		$output .= "Work has been completed for the following research migrations. We welcome your contributions." ."<hr>";
 
 	} //$result->rowCount() == 0
 	else
 	{
-		$output .= "Work has been completed for the following research migration. We welcome your contributions." . "<hr>";
+		$output .= "Work has been completed for the following research migrations. We welcome your contributions." . "<hr>";
 		$preference_rows = array();
 		$i = $result->rowCount();
 		while ($row = $result->fetchObject())
