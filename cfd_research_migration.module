@@ -284,8 +284,8 @@ function cfd_research_migration_menu()
     );
     /* AJAX REQUEST */
     $items['research-migration-project/certificates'] = array(
-        'title' => 'List of Research Migration Certificates',
-        'description' => 'List of Research Migration Certificates',
+        'title' => 'List of Research Migration Project Certificates',
+        'description' => 'List of Research Migration Project Certificates',
         'page callback' => '_list_research_migration_certificates',
         'access arguments' => array(
             'list Research Migration certificates',
