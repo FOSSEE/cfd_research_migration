@@ -589,7 +589,7 @@ if (isset($_FILES['files']))
 				if ($_FILES['files']['size'][$file_form_name] <= 0)
 					form_set_error($file_form_name, t('File size cannot be zero.'));
 				/* check if valid file name */
-				if (!textbook_companion_check_valid_filename($_FILES['files']['name'][$file_form_name]))
+				if (!cfd_research_migration_check_valid_filename($_FILES['files']['name'][$file_form_name]))
 					form_set_error($file_form_name, t('Invalid file name specified. Only alphabets and numbers are allowed as a valid filename.'));
 			} //$file_name
 		} //$_FILES['files']['name'] as $file_form_name => $file_name
@@ -625,7 +625,7 @@ function cfd_research_migration_proposal_form_submit($form, &$form_state)
 	$project_title = trim($project_title);
 	$proposar_name = $v['name_title'] . ' ' . $v['contributor_name'];
 	$university = $v['university'];
-	$directory_name = _df_dir_name($project_title, $proposar_name);
+	$directory_name = _rm_df_dir_name($project_title, $proposar_name);
 	$simulation_id = $v['simulation_type'];
 	if($simulation_id < 19){
 		$solver = $v['solver_used'];

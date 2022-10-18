@@ -162,11 +162,11 @@ function generate_pdf()
 	$urlRelativeFilePath = $path . "/pdf/temp_prcode/" . $fileName;
 	QRcode::png($codeContents, $pngAbsoluteFilePath);
 	$pdf->SetY(85);
-	$pdf->SetX(320);
-	$pdf->Ln(10);
+	$pdf->SetX(350);
+	$pdf->Ln(15);
 	$sign1 = $path . "/pdf/images/sign1.png";
 	$sign2 = $path . "/pdf/images/sign2.png";
-	$pdf->Image($sign1, $pdf->GetX()+75, $pdf->GetY() + 45, 60, 0);
+	$pdf->Image($sign1, $pdf->GetX()+75, $pdf->GetY() + 45, 75, 0);
 	$pdf->Image($sign2, $pdf->GetX()+160, $pdf->GetY() + 45, 75, 0);
 	$pdf->Image($pngAbsoluteFilePath, $pdf->GetX()+15, $pdf->GetY()+70, 30, 0);
 	$fossee = $path . "/pdf/images/fossee.png";

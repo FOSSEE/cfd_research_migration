@@ -8,6 +8,7 @@ require_once 'email.inc';
 /**
  * Implementation of hook_menu().
  */
+
 function cfd_research_migration_menu()
 {
     $items = array();
@@ -26,7 +27,7 @@ function cfd_research_migration_menu()
         'file' => 'add_project_titles.inc',
     );
     $items['research-migration-project/proposal'] = array(
-        'title' => 'Research Migration Proposal Form',
+        'title' => 'Research Migration Project Proposal Form',
         'description' => 'Research Migration Proposal Form',
         'page callback' => 'drupal_get_form',
         'page arguments' => array(
