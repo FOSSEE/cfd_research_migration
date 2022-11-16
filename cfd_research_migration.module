@@ -835,7 +835,7 @@ function add_lecture_videos_form_submit($form, $form_state){
     );
     $result = db_query($query, $args);
     if(!$result){
-        drupal_set_message("Something went wrong", 'error');
+        drupal_set_message("Something went wrong, please contact the web team", 'error');
     }
     else{
         drupal_set_message("Video has been added successfully", "status");
