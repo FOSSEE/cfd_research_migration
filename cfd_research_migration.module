@@ -13,6 +13,27 @@ function cfd_research_migration_menu()
 {
     $items = array();
     /* PROPOSAL */
+    $items['lecture-videos/add'] =array(
+        'title' => 'Add Lecture Video',
+        'description' => 'Add new lecture video',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array(
+            'add_lecture_videos_form',
+        ),
+        'access arguments' => array(
+            'Research Migration add project titles',
+        ),
+        'type' => MENU_NORMAL_ITEM,
+    );
+    $items['lecture-videos'] =array(
+        'title' => 'Lecture Video',
+        'description' => 'View lecture video',
+        'page callback' => 'view_lecture_videos',
+        'access arguments' => array(
+            'Research Migration download code',
+        ),
+        'type' => MENU_NORMAL_ITEM,
+    );
     $items['research-migration-project/add-project-title'] = array(
         'title' => 'Add new project titles',
         'description' => 'Add new project titles',
@@ -748,3 +769,144 @@ function _rm_rrmdir($dir)
         rmdir($dir);
     } //is_dir($dir)
 }
+function add_lecture_videos_form($form,$form_state) {
+        $form = array();
+        $form['video_sno'] = array(
+            '#type'  => 'textfield',
+            '#title' => t('S.No of the video'),
+            '#description' => t('Enter s.no starting from 1 to 100'),
+            '#required' => TRUE
+        );
+        $form['title_of_video'] = array(
+            '#type' => 'textfield',
+            '#title' => t("Title of the video lecture"),
+            '#required' => TRUE
+        );
+        $form["description_of_video"] = array(
+            "#type" => "text_format",
+            '#format' => 'full_html',
+            "#title" => "Description of the video",
+            "#required" => TRUE
+        );
+        $form["link_to_video"] = array(
+            "#type" => "textfield",
+            "#title" => "Paste the URL of the video lecture",
+            '#description' => t('Copy paste the static url of the video, for eg: https://static.fossee.in/cfd/<path_to_video>'),
+            '#size' => 255,
+            '#maxlength' => 255,
+            '#required' => TRUE
+        );
+        $form["link_to_script_file"] = array(
+            "#type" => "textfield",
+            "#title" => "Paste the URL of the script file  of the video lecture",
+            '#description' => t('Copy paste the static url of the script file, for eg: https://static.fossee.in/cfd/<path_to_script_file>'),
+            '#size' => 255,
+            '#maxlength' => 255,
+            '#required' =>TRUE
+        );
+        $form['lecture_visibility'] = array(
+            '#type' => 'select',
+            '#title' => t('Do you want to disable this lecture?'),
+            '#options' => array(
+                'Y' => 'Yes',
+                'N'  => 'No'
+            ),
+            '#required' => TRUE
+        );  
+        $form["submit"] = array(
+            "#type" => "submit",
+            "#value" => "Submit"
+        );
+        return $form;
+    }
+function add_lecture_videos_form_submit($form, $form_state){
+    $v = $form_state['values'];
+    $query = "INSERT INTO lecture_videos(video_sno, video_title, video_description_text, video_description_text_format, script_file_link, video_link, video_visibility, creation_date)VALUES(:video_sno, :video_title, :video_description_text, :video_description_text_format, :script_file_link, :video_link, :video_visibility, :creation_date)";
+    $args = array(
+        ":video_sno" => $v ['video_sno']                                                                                                                                         ,
+        ":video_title" => $v['title_of_video'],
+        ":video_description_text" => $v['description_of_video']['value'],
+        ":video_description_text_format" => $v['description_of_video']['format'],
+        ":script_file_link" => $v['link_to_script_file'],
+        ":video_link" => $v['link_to_video'],
+        ":video_visibility" => $v['lecture_visibility'],
+        ":creation_date" => time() 
+
+    );
+    $result = db_query($query, $args);
+    if(!$result){
+        drupal_set_message("Something went wrong", 'error');
+    }
+    else{
+        drupal_set_message("Video has been added successfully", "status");
+    }
+    drupal_goto('lecture-videos/add');
+}
+
+
+function view_lecture_videos(){
+    $page_content = "<div id='lecture-video-wrapper'>";
+    //$lecture_video_rows = db_query("select * from lecture_videos where video_visibility = 'N' order by video_sno ASC");
+    $query = db_select('lecture_videos');
+    $query->fields('lecture_videos');
+    $query->condition('video_visibility', 'N');
+    $query->orderBy('video_sno', 'ASC');
+    $row = $query->execute();
+    while($result = $row->fetchObject()){
+        $page_content .= "<div class='container-testimonial'><h3><strong>{$result->video_title}</strong></h3>";
+        $page_content .= "<video title='' controls='' preload='' data-setup='{}' width='500' height='250'>
+ <source src={$result->video_link} type='video/mp4'></video>";
+ $page_content .= "<span>{$result->video_description_text}</span></div>";
+    }
+    return $page_content;
+}
+
+drupal_add_css("
+.container-testimonial {
+  /*border: 2px solid #ccc;
+  background-color: #eee;*/
+  border: 4px inset #4af5d2;
+  background-color: #f2fffd;
+  border-radius: 5px;
+  padding: 16px;
+  margin: 10px 0;
+  color:black;
+}
+
+.container-testimonial::after {
+  content: '';
+  clear: both;
+  display: table;
+}
+
+.container-testimonial video {
+  float: left;
+  margin-right: 20px;
+  width: 500px !important;
+  height: 300px !important;
+}
+
+.container-testimonial span {
+  font-size: 11px;
+  text-align:justify;
+}
+
+.container-testimonial p {
+  margin: 0px !important;
+}
+
+
+@media (max-width: 768px) {
+  .container-testimonial {
+      text-align: center;
+  }
+  .container-testimonial video {
+      margin: auto;
+      float: none;
+      display: block;
+      width: 100% !important;
+  }
+  
+  
+  
+}", "inline");
