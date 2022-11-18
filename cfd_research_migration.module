@@ -856,7 +856,7 @@ function view_lecture_videos(){
         $page_content .= "<div class='container-testimonial'><h3><strong>{$result->video_title}</strong></h3>";
         $page_content .= "<video title='' controls='' preload='' data-setup='{}' width='500' height='250'>
  <source src={$result->video_link} type='video/mp4'></video>";
- $page_content .= "<span>{$result->video_description_text}</span></div>";
+ $page_content .= "<span>{$result->video_description_text}</span><h4>Click <a href='{$result->script_file_link}' target='_blank'>here</a> to view the script file</h4></div>";
     }
     return $page_content;
 }
