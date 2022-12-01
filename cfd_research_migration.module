@@ -21,8 +21,14 @@ function cfd_research_migration_menu()
             'add_lecture_videos_form',
         ),
         'access arguments' => array(
-            'Research Migration add project titles',
+            'manage lecture videos',
         ),
+        'type' => MENU_NORMAL_ITEM,
+    );
+    $items['lecture-videos/manage'] = array(
+        'title' => 'Manage Lecture Videos',
+        'page callback' => 'manage_lecture_videos',
+        'access arguments' => array('manage lecture videos'),
         'type' => MENU_NORMAL_ITEM,
     );
     $items['lecture-videos'] =array(
@@ -30,10 +36,23 @@ function cfd_research_migration_menu()
         'description' => 'View lecture video',
         'page callback' => 'view_lecture_videos',
         'access arguments' => array(
-            'Research Migration download code',
+            'view lecture videos',
         ),
         'type' => MENU_NORMAL_ITEM,
     );
+    $items['lecture-videos/edit'] = array(
+        'title' => 'Edit Lecture Videos',
+        // 'description' => 'Edit Proposal',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array(
+            'edit_lecture_videos_form',
+        ),
+        'access arguments' => array(
+            'manage lecture videos',
+        ),
+        'type' => MENU_NORMAL_ITEM,
+        // 'file' => 'manage_proposal.inc',
+     );
     $items['research-migration-project/add-project-title'] = array(
         'title' => 'Add new project titles',
         'description' => 'Add new project titles',
@@ -369,6 +388,18 @@ function cfd_research_migration_menu()
 function cfd_research_migration_permission()
 {
     return array(
+        'manage lecture videos' => array(
+            'title' => t('Add/Manage lecture videos'),
+            'restrict access' => true,
+        ),
+        'view lecture videos' => array(
+            'title' => t('View lecture videos'),
+            'restrict access' => true,
+        ),
+        // 'edit lecture videos' => array(
+        //     'title' => t('edit lecture videos'),
+        //     'restrict access' => true,
+        // ),
         'Research Migration add project titles' => array(
             'title' => t('Research Migration add project titles'),
             'restrict access' => true,
@@ -910,3 +941,140 @@ drupal_add_css("
   
   
 }", "inline");
+
+function manage_lecture_videos(){
+    $lecture_videos_array = array();
+    $page_content = "";
+    $query = db_select('lecture_videos');
+    $query->fields('lecture_videos');
+    $query->orderBy('video_sno', 'ASC');
+    $videos_q = $query->execute();
+    while($result = $videos_q->fetchObject()){
+        if($result->video_visibility == 'Y'){
+            $visibility = 'Yes';
+        }
+        else{
+            $visibility = 'No';
+        }
+        $lecture_videos_array[$result->id] = array(
+            $result->video_sno,
+            $result->video_title,
+            $visibility,
+            date('d-m-Y', $result->creation_date),
+            l('Edit details', 'lecture-videos/edit/' . $result->video_sno)
+        );
+    }
+    $lecture_videos_header = array(
+            'S.No',
+            'Title of the video',
+            'Video disabled',
+            'Date of video creation',
+            'Action'
+        );
+        $page_content .= theme("table", array(
+            'header' => $lecture_videos_header,
+            'rows' => $lecture_videos_array
+        ));
+        return $page_content;
+}
+
+
+/******************************************************************************/
+/**************************** EDIT LECTURE VIDEOS  ****************************/
+/******************************************************************************/
+function edit_lecture_videos_form($form, &$form_state)
+{
+    global $user;
+    /* get current proposal */
+    $video_id = (int) arg (2);
+    //$proposal_q = db_query("SELECT * FROM {research_migration_proposal} WHERE id = %d", $proposal_id);
+    $query = db_select('lecture_videos');
+    $query->fields('lecture_videos');
+    $query->condition('id', $video_id);
+    $lecture_video_q = $query->execute();
+    $lecture_video_data = $lecture_video_q->fetchObject();
+    //var_dump($lecture_video_data);die;
+
+    $form['video_sno'] = array(
+        '#type' => 'textfield',
+        '#title' => t('S.No of the video'),
+        '#required' => true,
+        '#disabled' => True,
+        '#default_value' => $lecture_video_data->video_sno,
+    );
+
+    $form['title_of_video'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Title of the video lecture'),
+        // '#size' => 30,
+        // '#maxlength' => 50,
+        '#required' => true,
+        '#default_value' => $lecture_video_data->video_title,
+    );
+   
+    $form['description_of_video'] = array(
+        '#type' => 'text_format',
+        '#format' => $lecture_video_data->video_description_text_format,
+        '#title' => 'Description of the video',
+        '#required' => TRUE,
+        '#default_value'=> $lecture_video_data->video_description_text,
+    );
+    $form['link_to_video'] = array(
+        '#type' => 'textfield',
+        "#title" => "Paste the URL of the video lecture",
+        '#size' => 255,
+        '#maxlength' => 255,
+        '#required' => TRUE,
+        '#default_value'=> $lecture_video_data->video_link,
+    );
+    $form["link_to_script_file"] = array(
+        "#type" => "textfield",
+        "#title" => "Paste the URL of the script file  of the video lecture",
+       
+        '#size' => 255,
+        '#maxlength' => 255,
+        '#required' =>TRUE,
+        '#default_value'=> $lecture_video_data->script_file_link,
+    );
+    //var_dump($lecture_video_data->video_visibility);die;
+    $form['lecture_visibility'] = array(
+        '#type' => 'select',
+        '#title' => t('Do you want to disable this lecture?'),
+        '#default_value'=> t($lecture_video_data->video_visibility),
+        '#options' => array(
+            'Y' => t('Yes'),
+            'N'  => t('No')
+        ),
+        '#required' => TRUE,
+    ); 
+    $form["submit"] = array(
+        "#type" => "submit",
+        "#value" => "Submit"
+    );
+    
+    return $form;
+}
+
+function edit_lecture_videos_form_submit($form, &$form_state) {
+    $v = $form_state['values'];
+    $query = "UPDATE lecture_videos SET
+            video_title = :video_title,
+            video_description_text = :video_description_text,
+            video_description_text_format = :video_description_text_format,
+            script_file_link = :script_file_link,
+            video_link = :video_link,
+            video_visibility = :video_visibility
+            WHERE video_sno = :video_sno";
+    $args = array(
+        ":video_title" => $v['title_of_video'],
+        ":video_description_text" => $v['description_of_video']['value'],
+        ":video_description_text_format" => $v['description_of_video']['format'],
+        ":script_file_link" => $v['link_to_script_file'],
+        ":video_link" => $v['link_to_video'],
+        ":video_visibility" => $v['lecture_visibility'],
+        ":video_sno" => $v['video_sno']
+    );
+    $result= db_query($query, $args);
+    drupal_set_message('Video details updated successfully', 'status');
+    drupal_goto('lecture-videos/manage');
+}
