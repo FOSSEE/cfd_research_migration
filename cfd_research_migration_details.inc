@@ -75,7 +75,7 @@ function cfd_research_migration_progress_all()
 	{
 		$page_content .= "Work is in progress for the following research migration under Research Migration Project<hr>";
 		$preference_rows = array();
-		$i = 1;
+		$i = $result->rowCount();
 		while ($row = $result->fetchObject())
 		{
 			$approval_date = date("Y", $row->approval_date);
@@ -86,7 +86,7 @@ function cfd_research_migration_progress_all()
 				$row->university,
 				$approval_date
 			);
-			$i++;
+			$i--;
 		} //$row = $result->fetchObject()
 		$preference_header = array(
 			'No',
