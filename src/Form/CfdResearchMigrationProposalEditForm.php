@@ -10,6 +10,10 @@ namespace Drupal\cfd_research_migration\Form;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Drupal\user\Entity\User;
+use Drupal\Core\Url;
+use Drupal\Core\Link;
 
 class CfdResearchMigrationProposalEditForm extends FormBase {
 
@@ -23,7 +27,13 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
   public function buildForm(array $form, \Drupal\Core\Form\FormStateInterface $form_state) {
     $user = \Drupal::currentUser();
     /* get current proposal */
-    $proposal_id = (int) arg(3);
+    // $proposal_id = (int) arg(3);
+
+    $route_match = \Drupal::routeMatch();
+
+    $proposal_id = (int) $route_match->getParameter('proposal_id');
+    
+
     //$proposal_q = \Drupal::database()->query("SELECT * FROM {research_migration_proposal} WHERE id = %d", $proposal_id);
     $query = \Drupal::database()->select('research_migration_proposal');
     $query->fields('research_migration_proposal');
@@ -35,17 +45,17 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
             /* everything ok 
         } //$proposal_data = $proposal_q->fetchObject()
         else {
-            drupal_set_message(t('Invalid proposal selected. Please try again.'), 'error');
+            \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
             drupal_goto('research-migration-project/manage-proposal');
             return;
         }
     } //$proposal_q
     else {
-        drupal_set_message(t('Invalid proposal selected. Please try again.'), 'error');
+        \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
         drupal_goto('research-migration-project/manage-proposal');
         return;
     }*/
-    $user_data = user_load($proposal_data->uid);
+    $user_data = User::load($proposal_data->uid);
     $form['name_title'] = [
       '#type' => 'select',
       '#title' => t('Title'),
@@ -180,7 +190,7 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
     $form['all_state'] = [
       '#type' => 'select',
       '#title' => t('State'),
-      '#options' => _df_list_of_states(),
+      '#options' => \Drupal::service("cfd_research_migration_global")->_df_list_of_states(),
       '#default_value' => $proposal_data->state,
       '#validated' => TRUE,
       '#states' => [
@@ -301,7 +311,7 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
     ];
     $form['cancel'] = [
       '#type' => 'item',
-      '#markup' => l(t('Cancel'), 'research-migration-project/manage-proposal'),
+      // '#markup' => l(t('Cancel'), 'research-migration-project/manage-proposal'),
     ];
     return $form;
   }
@@ -334,7 +344,7 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
   public function submitForm(array &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
     $user = \Drupal::currentUser();
     /* get current proposal */
-    $proposal_id = (int) arg(3);
+    // $proposal_id = (int) arg(3);
     $query = \Drupal::database()->select('research_migration_proposal');
     $query->fields('research_migration_proposal');
     $query->condition('id', $proposal_id);
@@ -344,46 +354,46 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
         /* everything ok */
       } //$proposal_data = $proposal_q->fetchObject()
       else {
-        drupal_set_message(t('Invalid proposal selected. Please try again.'), 'error');
+        \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
         drupal_goto('research-migration-project/manage-proposal');
         return;
       }
     } //$proposal_q
     else {
-      drupal_set_message(t('Invalid proposal selected. Please try again.'), 'error');
-      drupal_goto('research-migration-project/manage-proposal');
+      \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
+      // drupal_goto('research-migration-project/manage-proposal');
       return;
     }
     /* delete proposal */
     if ($form_state->getValue(['delete_proposal']) == 1) {
       /* sending email */
-      $user_data = user_load($proposal_data->uid);
-      $email_to = $user_data->mail;
-      $from = variable_get('research_migration_from_email', '');
-      $bcc = variable_get('research_migration_emails', '');
-      $cc = variable_get('research_migration_cc_emails', '');
-      $params['research_migration_proposal_deleted']['proposal_id'] = $proposal_id;
-      $params['research_migration_proposal_deleted']['user_id'] = $proposal_data->uid;
-      $params['research_migration_proposal_deleted']['headers'] = [
-        'From' => $from,
-        'MIME-Version' => '1.0',
-        'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
-        'Content-Transfer-Encoding' => '8Bit',
-        'X-Mailer' => 'Drupal',
-        'Cc' => $cc,
-        'Bcc' => $bcc,
-      ];
-      if (!drupal_mail('research_migration', 'research_migration_proposal_deleted', $email_to, user_preferred_language($user), $params, $from, TRUE)) {
-        drupal_set_message('Error sending email message.', 'error');
-      }
+      // $user_data = user_load($proposal_data->uid);
+      // $email_to = $user_data->mail;
+      // $from = variable_get('research_migration_from_email', '');
+      // $bcc = variable_get('research_migration_emails', '');
+      // $cc = variable_get('research_migration_cc_emails', '');
+      // $params['research_migration_proposal_deleted']['proposal_id'] = $proposal_id;
+      // $params['research_migration_proposal_deleted']['user_id'] = $proposal_data->uid;
+      // $params['research_migration_proposal_deleted']['headers'] = [
+      //   'From' => $from,
+      //   'MIME-Version' => '1.0',
+      //   'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
+      //   'Content-Transfer-Encoding' => '8Bit',
+      //   'X-Mailer' => 'Drupal',
+      //   'Cc' => $cc,
+      //   'Bcc' => $bcc,
+      // ];
+      // if (!drupal_mail('research_migration', 'research_migration_proposal_deleted', $email_to, user_preferred_language($user), $params, $from, TRUE)) {
+      //   \Drupal::messenger()->addMessage('Error sending email message.', 'error');
+      // }
 
-      drupal_set_message(t('research migration proposal has been deleted.'), 'status');
+      \Drupal::messenger()->addMessage(t('research migration proposal has been deleted.'), 'status');
       if (_rm_rrmdir_project($proposal_id) == TRUE) {
         $query = db_delete('research_migration_proposal');
         $query->condition('id', $proposal_id);
         $num_deleted = $query->execute();
-        drupal_set_message(t('Proposal Deleted'), 'status');
-        drupal_goto('research-migration-project/manage-proposal');
+        \Drupal::messenger()->addMessage(t('Proposal Deleted'), 'status');
+        // drupal_goto('research-migration-project/manage-proposal');
         return;
       } //rrmdir_project($proposal_id) == TRUE
     } //$form_state['values']['delete_proposal'] == 1
@@ -444,7 +454,7 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
       ':proposal_id' => $proposal_id,
     ];
     $result = \Drupal::database()->query($query, $args);
-    drupal_set_message(t('Proposal Updated'), 'status');
+    \Drupal::messenger()->addMessage(t('Proposal Updated'), 'status');
   }
 
 }

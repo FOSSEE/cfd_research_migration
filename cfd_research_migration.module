@@ -529,7 +529,7 @@ function cfd_research_migration_get_proposal()
     $proposal_data = $proposal_q->fetchObject();
     if (!$proposal_data) {
         \Drupal::messenger()->addError("You do not have any approved  Research Migration proposal. Please propose a Research Migration");
-        drupal_goto('');
+        // drupal_goto('');
     } //!$proposal_data
     switch ($proposal_data->approval_status) {
         case 0:

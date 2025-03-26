@@ -89,262 +89,587 @@ class DefaultController extends ControllerBase {
     return $page_content;
   }
 
-  public function cfd_research_migration_proposal_pending() {
-    /* get pending proposals to be approved */
+//   public function cfd_research_migration_proposal_pending() {
+//     /* get pending proposals to be approved */
+//     $pending_rows = [];
+//     $query = \Drupal::database()->select('research_migration_proposal');
+//     $query->fields('research_migration_proposal');
+//     $query->condition('approval_status', 0);
+//     $query->orderBy('id', 'DESC');
+//     $pending_q = $query->execute();
+//     while ($pending_data = $pending_q->fetchObject()) {
+//       $approve_url = Url::fromRoute('cfd_research_migration.proposal_approval_form', ['id' => $pending_data->id]);
+//       $edit_url = Url::fromRoute('cfd_research_migration.proposal_edit_form', ['id' => $pending_data->id]);
+      
+//       $approve_link = Link::fromTextAndUrl(t('Approve'), $approve_url)->toString();
+//       $edit_link = Link::fromTextAndUrl(t('Edit'), $edit_url)->toString();
+    
+//       $mainlink = $approve_link . ' | ' . $edit_link;
+      
+      
+//       $pending_rows[$pending_data->id] = [
+//         date('d-m-Y', $pending_data->creation_date),
+//         // l($pending_data->name_title . ' ' . $pending_data->contributor_name, 'user/' . $pending_data->uid),
+
+//  Url::fromRoute('entity.user.canonical', ['user' => $pending_data->uid]),
+//  Link::fromTextAndUrl($pending_data->name_title . ' ' . $pending_data->contributor_name, $url)->toString(),
+
+//         $pending_data->project_title,
+//         $mainlink,
+
+//         // l('Approve', 'research-migration-project/manage-proposal/approve/' . $pending_data->id) . ' | ' . l('Edit', 'research-migration-project/manage-proposal/edit/' . $pending_data->id),
+
+
+
+//       ];
+//     } //$pending_data = $pending_q->fetchObject()
+//     /* check if there are any pending proposals */
+//     // if (!$pending_rows) {
+//     //   \Drupal::messenger()->addMessage(t('There are no pending proposals.'), 'status');
+//     //   return '';
+//     // } //!$pending_rows
+//     $pending_header = [
+//       'Date of Submission',
+//       'Student Name',
+//       'Title of the Research Migration Project',
+//       'Action',
+//     ];
+//     //$output = theme_table($pending_header, $pending_rows);
+//     $output =  [
+//       '#type' =>'table',
+//       '#header' => $pending_header,
+//       '#rows' => $pending_rows,
+//     ];
+//     return $output;
+//   }
+
+public function cfd_research_migration_proposal_pending() {
+    /* Get pending proposals to be approved */
     $pending_rows = [];
-    $query = \Drupal::database()->select('research_migration_proposal');
-    $query->fields('research_migration_proposal');
-    $query->condition('approval_status', 0);
-    $query->orderBy('id', 'DESC');
+    $database = Database::getConnection();
+    
+    $query = $database->select('research_migration_proposal', 'rmp')
+        ->fields('rmp')
+        ->condition('approval_status', 0)
+        ->orderBy('id', 'DESC');
+    
     $pending_q = $query->execute();
+
+    // while ($pending_data = $pending_q->fetchObject()) {
+    //     // Generate links for approve and edit actions
+    //     $approve_url = Url::fromRoute('cfd_research_migration.proposal_approval_form', ['id' => $pending_data->id]);
+    //     $edit_url = Url::fromRoute('cfd_research_migration.proposal_edit_form', ['id' => $pending_data->id]);
+
+    //     $approve_link = Link::fromTextAndUrl(t('Approve'), $approve_url)->toString();
+    //     $edit_link = Link::fromTextAndUrl(t('Edit'), $edit_url)->toString();
+    //     $mainlink = $approve_link . ' | ' . $edit_link;
+
+    //     // Generate user profile link
+    //     $user_url = Url::fromRoute('entity.user.canonical', ['user' => $pending_data->uid]);
+    //     $user_link = Link::fromTextAndUrl($pending_data->name_title . ' ' . $pending_data->contributor_name, $user_url)->toString();
+
+    //     $pending_rows[] = [
+    //         date('d-m-Y', $pending_data->creation_date),
+    //         $user_link,
+    //         $pending_data->project_title,
+    //         $mainlink,
+    //     ];
+    // }
+
     while ($pending_data = $pending_q->fetchObject()) {
-      $pending_rows[$pending_data->id] = [
-        date('d-m-Y', $pending_data->creation_date),
-        l($pending_data->name_title . ' ' . $pending_data->contributor_name, 'user/' . $pending_data->uid),
-        $pending_data->project_title,
-        l('Approve', 'research-migration-project/manage-proposal/approve/' . $pending_data->id) . ' | ' . l('Edit', 'research-migration-project/manage-proposal/edit/' . $pending_data->id),
-      ];
-    } //$pending_data = $pending_q->fetchObject()
-    /* check if there are any pending proposals */
-    if (!$pending_rows) {
-      drupal_set_message(t('There are no pending proposals.'), 'status');
-      return '';
-    } //!$pending_rows
-    $pending_header = [
-      'Date of Submission',
-      'Student Name',
-      'Title of the Research Migration Project',
-      'Action',
-    ];
-    //$output = theme_table($pending_header, $pending_rows);
-    $output = theme('table', [
-      'header' => $pending_header,
-      'rows' => $pending_rows,
-    ]);
-    return $output;
-  }
+      // Generate links for approve and edit actions
+      $approve_url = Url::fromRoute('cfd_research_migration.proposal_approval_form', ['id' => $pending_data->id]);
+      $edit_url = Url::fromRoute('cfd_research_migration.proposal_edit_form', ['id' => $pending_data->id]);
 
+      $approve_link = Link::fromTextAndUrl(t('Approve'), $approve_url)->toRenderable();
+      $edit_link = Link::fromTextAndUrl(t('Edit'), $edit_url)->toRenderable();
+
+      // Ensure the action column renders properly
+      $mainlink = [
+          'data' => [
+              '#type' => 'inline_template',
+              '#template' => '{{ approve }} | {{ edit }}',
+              '#context' => [
+                  'approve' => render($approve_link),
+                  'edit' => render($edit_link),
+              ],
+          ],
+      ];
+
+    /* Check if there are any pending proposals */
+    // if (empty($pending_rows)) {
+    //     \Drupal::messenger()->addMessage(t('There are no pending proposals.'), 'status');
+    //     return [];
+    // }
+
+      $pending_header = [
+              'Date of Submission',
+              'Student Name',
+              'Title of the Research Migration Project',
+              'Action',
+            ];
+            
+
+    return [
+        '#type' => 'table',
+        '#header' => $pending_header,
+        '#rows' => $pending_rows,
+    ];
+}
+}
+
+  // public function cfd_research_migration_proposal_all() {
+  //   /* get pending proposals to be approved */
+  //   $proposal_rows = [];
+  //   $query = \Drupal::database()->select('research_migration_proposal');
+  //   $query->fields('research_migration_proposal');
+  //   $query->orderBy('id', 'DESC');
+  //   $proposal_q = $query->execute();
+  //   while ($proposal_data = $proposal_q->fetchObject()) {
+  //     $approval_status = '';
+  //     switch ($proposal_data->approval_status) {
+  //       case 0:
+  //         $approval_status = 'Pending';
+  //         break;
+  //       case 1:
+  //         $approval_status = 'Approved';
+  //         break;
+  //       case 2:
+  //         $approval_status = 'Dis-approved';
+  //         break;
+  //       case 3:
+  //         $approval_status = 'Completed';
+  //         break;
+  //       case 5:
+  //         $approval_status = 'On Hold';
+  //         break;
+  //       default:
+  //         $approval_status = 'Unknown';
+  //         break;
+  //     } //$proposal_data->approval_status
+  //     if ($proposal_data->actual_completion_date == 0) {
+  //       $actual_completion_date = "Not Completed";
+  //     } //$proposal_data->actual_completion_date == 0
+  //     else {
+  //       $actual_completion_date = date('d-m-Y', $proposal_data->actual_completion_date);
+  //     }
+  //     if ($proposal_data->approval_date == 0) {
+  //       $approval_date = "Not Approved";
+  //     } //$proposal_data->actual_completion_date == 0
+  //     else {
+  //       $approval_date = date('d-m-Y', $proposal_data->approval_date);
+  //     }
+  //     $proposal_rows[] = [
+  //       date('d-m-Y', $proposal_data->creation_date),
+  //       l($proposal_data->contributor_name, 'user/' . $proposal_data->uid),
+  //       $proposal_data->project_title,
+  //       $approval_date,
+  //       $actual_completion_date,
+  //       $approval_status,
+  //       l('Status', 'research-migration-project/manage-proposal/status/' . $proposal_data->id) . ' | ' . l('Edit', 'research-migration-project/manage-proposal/edit/' . $proposal_data->id),
+  //     ];
+  //   } //$proposal_data = $proposal_q->fetchObject()
+  //   /* check if there are any pending proposals */
+  //   if (!$proposal_rows) {
+  //     \Drupal::messenger()->addMessage(t('There are no proposals.'), 'status');
+  //     return '';
+  //   } //!$proposal_rows
+  //   $proposal_header = [
+  //     'Date of Submission',
+  //     'Student Name',
+  //     'Title of the Research Migration project',
+  //     'Date of Approval',
+  //     'Date of Project Completion',
+  //     'Status',
+  //     'Action',
+  //   ];
+  //   $output = theme('table', [
+  //     'header' => $proposal_header,
+  //     'rows' => $proposal_rows,
+  //   ]);
+  //   return $output;
+  // }
+  
+  
   public function cfd_research_migration_proposal_all() {
-    /* get pending proposals to be approved */
-    $proposal_rows = [];
-    $query = \Drupal::database()->select('research_migration_proposal');
-    $query->fields('research_migration_proposal');
-    $query->orderBy('id', 'DESC');
-    $proposal_q = $query->execute();
-    while ($proposal_data = $proposal_q->fetchObject()) {
-      $approval_status = '';
-      switch ($proposal_data->approval_status) {
-        case 0:
-          $approval_status = 'Pending';
-          break;
-        case 1:
-          $approval_status = 'Approved';
-          break;
-        case 2:
-          $approval_status = 'Dis-approved';
-          break;
-        case 3:
-          $approval_status = 'Completed';
-          break;
-        case 5:
-          $approval_status = 'On Hold';
-          break;
-        default:
-          $approval_status = 'Unknown';
-          break;
-      } //$proposal_data->approval_status
-      if ($proposal_data->actual_completion_date == 0) {
-        $actual_completion_date = "Not Completed";
-      } //$proposal_data->actual_completion_date == 0
-      else {
-        $actual_completion_date = date('d-m-Y', $proposal_data->actual_completion_date);
+      /* Get all proposals */
+      $proposal_rows = [];
+      $database = Database::getConnection();
+      
+      $query = $database->select('research_migration_proposal', 'rmp')
+          ->fields('rmp')
+          ->orderBy('id', 'DESC');
+      
+      $proposal_q = $query->execute();
+  
+      while ($proposal_data = $proposal_q->fetchObject()) {
+          // Determine Approval Status
+          $approval_statuses = [
+              0 => 'Pending',
+              1 => 'Approved',
+              2 => 'Dis-approved',
+              3 => 'Completed',
+              5 => 'On Hold',
+          ];
+          $approval_status = $approval_statuses[$proposal_data->approval_status] ?? 'Unknown';
+  
+          // Format Dates
+          $actual_completion_date = $proposal_data->actual_completion_date ? date('d-m-Y', $proposal_data->actual_completion_date) : "Not Completed";
+          $approval_date = $proposal_data->approval_date ? date('d-m-Y', $proposal_data->approval_date) : "Not Approved";
+  
+          // Generate user profile link
+          $user_url = Url::fromRoute('entity.user.canonical', ['user' => $proposal_data->uid]);
+          $user_link = Link::fromTextAndUrl($proposal_data->contributor_name, $user_url)->toRenderable();
+  
+          // Generate Status and Edit links
+          $status_url = Url::fromRoute('cfd_research_migration.proposal_status_form', ['id' => $proposal_data->id]);
+          $edit_url = Url::fromRoute('cfd_research_migration.proposal_edit_form', ['id' => $proposal_data->id]);
+  
+          $status_link = Link::fromTextAndUrl(t('Status'), $status_url)->toRenderable();
+          $edit_link = Link::fromTextAndUrl(t('Edit'), $edit_url)->toRenderable();
+  
+          // Render links inline
+          $action_links = [
+              'data' => [
+                  '#type' => 'inline_template',
+                  '#template' => '{{ status }} | {{ edit }}',
+                  '#context' => [
+                      'status' => render($status_link),
+                      'edit' => render($edit_link),
+                  ],
+              ],
+          ];
+  
+          $proposal_rows[] = [
+              'date' => date('d-m-Y', $proposal_data->creation_date),
+              'student_name' => ['data' => $user_link],
+              'title' => $proposal_data->project_title,
+              'approval_date' => $approval_date,
+              'completion_date' => $actual_completion_date,
+              'status' => $approval_status,
+              'action' => $action_links,
+          ];
       }
-      if ($proposal_data->approval_date == 0) {
-        $approval_date = "Not Approved";
-      } //$proposal_data->actual_completion_date == 0
-      else {
-        $approval_date = date('d-m-Y', $proposal_data->approval_date);
+  
+      /* Check if there are any proposals */
+      if (empty($proposal_rows)) {
+          \Drupal::messenger()->addMessage(t('There are no proposals.'), 'status');
+          return [];
       }
-      $proposal_rows[] = [
-        date('d-m-Y', $proposal_data->creation_date),
-        l($proposal_data->contributor_name, 'user/' . $proposal_data->uid),
-        $proposal_data->project_title,
-        $approval_date,
-        $actual_completion_date,
-        $approval_status,
-        l('Status', 'research-migration-project/manage-proposal/status/' . $proposal_data->id) . ' | ' . l('Edit', 'research-migration-project/manage-proposal/edit/' . $proposal_data->id),
+  
+      // Define table headers
+      $proposal_header = [
+          'date' => t('Date of Submission'),
+          'student_name' => t('Student Name'),
+          'title' => t('Title of the Research Migration Project'),
+          'approval_date' => t('Date of Approval'),
+          'completion_date' => t('Date of Project Completion'),
+          'status' => t('Status'),
+          'action' => t('Action'),
       ];
-    } //$proposal_data = $proposal_q->fetchObject()
-    /* check if there are any pending proposals */
-    if (!$proposal_rows) {
-      drupal_set_message(t('There are no proposals.'), 'status');
-      return '';
-    } //!$proposal_rows
-    $proposal_header = [
-      'Date of Submission',
-      'Student Name',
-      'Title of the Research Migration project',
-      'Date of Approval',
-      'Date of Project Completion',
-      'Status',
-      'Action',
-    ];
-    $output = theme('table', [
-      'header' => $proposal_header,
-      'rows' => $proposal_rows,
-    ]);
-    return $output;
-  }
-
-  public function cfd_research_migration_proposal_edit_file_all() {
-    /* get pending proposals to be approved */
-    $proposal_rows = [];
-    $query = \Drupal::database()->select('research_migration_proposal');
-    $query->fields('research_migration_proposal');
-    $query->orderBy('id', 'DESC');
-    $query->condition('approval_status', '0', '<>');
-    $query->condition('approval_status', '1', '<>');
-    $query->condition('approval_status', '2', '<>');
-    $query->orderBy('approval_status', 'DESC');
-    $proposal_q = $query->execute();
-    while ($proposal_data = $proposal_q->fetchObject()) {
-      $approval_status = '';
-      switch ($proposal_data->approval_status) {
-        case 0:
-          $approval_status = 'Pending';
-          break;
-        case 1:
-          $approval_status = 'Approved';
-          break;
-        case 2:
-          $approval_status = 'Dis-approved';
-          break;
-        case 3:
-          $approval_status = 'Completed';
-          break;
-        case 5:
-          $approval_status = 'On Hold';
-          break;
-        default:
-          $approval_status = 'Unknown';
-          break;
-      } //$proposal_data->approval_status
-      if ($proposal_data->actual_completion_date == 0) {
-        $actual_completion_date = "Not Completed";
-      } //$proposal_data->actual_completion_date == 0
-      else {
-        $actual_completion_date = date('d-m-Y', $proposal_data->actual_completion_date);
-      }
-      if ($proposal_data->approval_date == 0) {
-        $approval_date = "Not Approved";
-      } //$proposal_data->actual_completion_date == 0
-      else {
-        $approval_date = date('d-m-Y', $proposal_data->approval_date);
-      }
-      $proposal_rows[] = [
-        date('d-m-Y', $proposal_data->creation_date),
-        l($proposal_data->contributor_name, 'user/' . $proposal_data->uid),
-        $proposal_data->project_title,
-        $approval_date,
-        $actual_completion_date,
-        $approval_status,
-        l('Edit', 'research-migration-project/abstract-code/edit-upload-files/' . $proposal_data->id),
+  
+      return [
+          '#type' => 'table',
+          '#header' => $proposal_header,
+          '#rows' => $proposal_rows,
       ];
-    } //$proposal_data = $proposal_q->fetchObject()
-    /* check if there are any pending proposals */
-    if (!$proposal_rows) {
-      drupal_set_message(t('There are no proposals.'), 'status');
-      return '';
-    } //!$proposal_rows
-    $proposal_header = [
-      'Date of Submission',
-      'Student Name',
-      'Title of the Research Migration project',
-      'Date of Approval',
-      'Date of Project Completion',
-      'Status',
-      'Action',
-    ];
-    $output = theme('table', [
-      'header' => $proposal_header,
-      'rows' => $proposal_rows,
-    ]);
-    return $output;
   }
+  
+  // public function cfd_research_migration_proposal_edit_file_all() {
+  //   /* get pending proposals to be approved */
+  //   $proposal_rows = [];
+  //   $query = \Drupal::database()->select('research_migration_proposal');
+  //   $query->fields('research_migration_proposal');
+  //   $query->orderBy('id', 'DESC');
+  //   $query->condition('approval_status', '0', '<>');
+  //   $query->condition('approval_status', '1', '<>');
+  //   $query->condition('approval_status', '2', '<>');
+  //   $query->orderBy('approval_status', 'DESC');
+  //   $proposal_q = $query->execute();
+  //   while ($proposal_data = $proposal_q->fetchObject()) {
+  //     $approval_status = '';
+  //     switch ($proposal_data->approval_status) {
+  //       case 0:
+  //         $approval_status = 'Pending';
+  //         break;
+  //       case 1:
+  //         $approval_status = 'Approved';
+  //         break;
+  //       case 2:
+  //         $approval_status = 'Dis-approved';
+  //         break;
+  //       case 3:
+  //         $approval_status = 'Completed';
+  //         break;
+  //       case 5:
+  //         $approval_status = 'On Hold';
+  //         break;
+  //       default:
+  //         $approval_status = 'Unknown';
+  //         break;
+  //     } //$proposal_data->approval_status
+  //     if ($proposal_data->actual_completion_date == 0) {
+  //       $actual_completion_date = "Not Completed";
+  //     } //$proposal_data->actual_completion_date == 0
+  //     else {
+  //       $actual_completion_date = date('d-m-Y', $proposal_data->actual_completion_date);
+  //     }
+  //     if ($proposal_data->approval_date == 0) {
+  //       $approval_date = "Not Approved";
+  //     } //$proposal_data->actual_completion_date == 0
+  //     else {
+  //       $approval_date = date('d-m-Y', $proposal_data->approval_date);
+  //     }
+  //     $proposal_rows[] = [
+  //       date('d-m-Y', $proposal_data->creation_date),
+  //       l($proposal_data->contributor_name, 'user/' . $proposal_data->uid),
+  //       $proposal_data->project_title,
+  //       $approval_date,
+  //       $actual_completion_date,
+  //       $approval_status,
+  //       l('Edit', 'research-migration-project/abstract-code/edit-upload-files/' . $proposal_data->id),
+  //     ];
+  //   } //$proposal_data = $proposal_q->fetchObject()
+  //   /* check if there are any pending proposals */
+  //   if (!$proposal_rows) {
+  //     \Drupal::messenger()->addMessage(t('There are no proposals.'), 'status');
+  //     return '';
+  //   } //!$proposal_rows
+  //   $proposal_header = [
+  //     'Date of Submission',
+  //     'Student Name',
+  //     'Title of the Research Migration project',
+  //     'Date of Approval',
+  //     'Date of Project Completion',
+  //     'Status',
+  //     'Action',
+  //   ];
+  //   $output = theme('table', [
+  //     'header' => $proposal_header,
+  //     'rows' => $proposal_rows,
+  //   ]);
+  //   return $output;
+  // }
 
-  public function cfd_research_migration_abstract() {
+
+public function cfd_research_migration_proposal_edit_file_all() {
+    /* Get proposals excluding approval_status 0, 1, and 2 */
+    $proposal_rows = [];
+    $database = Database::getConnection();
+
+    $query = $database->select('research_migration_proposal', 'rmp')
+        ->fields('rmp')
+        ->condition('approval_status', [0, 1, 2], 'NOT IN')
+        ->orderBy('approval_status', 'DESC')
+        ->orderBy('id', 'DESC');
+    
+    $proposal_q = $query->execute();
+
+    while ($proposal_data = $proposal_q->fetchObject()) {
+        // Determine Approval Status
+        $approval_statuses = [
+            0 => 'Pending',
+            1 => 'Approved',
+            2 => 'Dis-approved',
+            3 => 'Completed',
+            5 => 'On Hold',
+        ];
+        $approval_status = $approval_statuses[$proposal_data->approval_status] ?? 'Unknown';
+
+        // Format Dates
+        $actual_completion_date = $proposal_data->actual_completion_date ? date('d-m-Y', $proposal_data->actual_completion_date) : "Not Completed";
+        $approval_date = $proposal_data->approval_date ? date('d-m-Y', $proposal_data->approval_date) : "Not Approved";
+
+        // Generate user profile link
+        $user_url = Url::fromRoute('entity.user.canonical', ['user' => $proposal_data->uid]);
+        $user_link = Link::fromTextAndUrl($proposal_data->contributor_name, $user_url)->toRenderable();
+
+        // Generate Edit link
+        $edit_url = Url::fromRoute('cfd_research_migration.proposal_edit_file_all', ['id' => $proposal_data->id]);
+        $edit_link = Link::fromTextAndUrl(t('Edit'), $edit_url)->toRenderable();
+
+        $proposal_rows[] = [
+            'date' => date('d-m-Y', $proposal_data->creation_date),
+            'student_name' => ['data' => $user_link],
+            'title' => $proposal_data->project_title,
+            'approval_date' => $approval_date,
+            'completion_date' => $actual_completion_date,
+            'status' => $approval_status,
+            'action' => ['data' => $edit_link],
+        ];
+    }
+
+    /* Check if there are any proposals */
+    if (empty($proposal_rows)) {
+        \Drupal::messenger()->addMessage(t('There are no proposals.'), 'status');
+        return [];
+    }
+
+    // Define table headers
+    $proposal_header = [
+        'date' => t('Date of Submission'),
+        'student_name' => t('Student Name'),
+        'title' => t('Title of the Research Migration Project'),
+        'approval_date' => t('Date of Approval'),
+        'completion_date' => t('Date of Project Completion'),
+        'status' => t('Status'),
+        'action' => t('Action'),
+    ];
+
+    return [
+        '#type' => 'table',
+        '#header' => $proposal_header,
+        '#rows' => $proposal_rows,
+    ];
+}
+
+
+  // public function cfd_research_migration_abstract() {
+  //   $user = \Drupal::currentUser();
+  //   $return_html = "";
+  //   $proposal_data = cfd_research_migration_get_proposal();
+  //   if (!$proposal_data) {
+  //     // drupal_goto('');
+  //     return;
+  //   } //!$proposal_data
+  //   //$return_html .= l('Upload abstract', 'research-migration-project/abstract-code/upload') . '<br />';
+  //   /* get experiment list */
+  //   $query = \Drupal::database()->select('research_migration_submitted_abstracts');
+  //   $query->fields('research_migration_submitted_abstracts');
+  //   $query->condition('proposal_id', $proposal_data->id);
+  //   $abstracts_q = $query->execute()->fetchObject();
+  //   $query_pro = \Drupal::database()->select('research_migration_proposal');
+  //   $query_pro->fields('research_migration_proposal');
+  //   $query_pro->condition('id', $proposal_data->id);
+  //   $abstracts_pro = $query_pro->execute()->fetchObject();
+  //   $query_pdf = \Drupal::database()->select('research_migration_submitted_abstracts_file');
+  //   $query_pdf->fields('research_migration_submitted_abstracts_file');
+  //   $query_pdf->condition('proposal_id', $proposal_data->id);
+  //   $query_pdf->condition('filetype', 'A');
+  //   $abstracts_pdf = $query_pdf->execute()->fetchObject();
+  //   if ($abstracts_pdf == TRUE) {
+  //     if ($abstracts_pdf->filename != "NULL" || $abstracts_pdf->filename != "") {
+  //       $abstract_filename = $abstracts_pdf->filename;
+  //       //$abstract_filename = l($abstracts_pdf->filename, 'research-migration-project/download/project-file/' . $proposal_data->id);
+  //     } //$abstracts_pdf->filename != "NULL" || $abstracts_pdf->filename != ""
+  //     else {
+  //       $abstract_filename = "File not uploaded";
+  //     }
+  //   } //$abstracts_pdf == TRUE
+  //   else {
+  //     $abstract_filename = "File not uploaded";
+  //   }
+  //   $query_process = \Drupal::database()->select('research_migration_submitted_abstracts_file');
+  //   $query_process->fields('research_migration_submitted_abstracts_file');
+  //   $query_process->condition('proposal_id', $proposal_data->id);
+  //   $query_process->condition('filetype', 'S');
+  //   $abstracts_query_process = $query_process->execute()->fetchObject();
+  //   if ($abstracts_query_process == TRUE) {
+  //     if ($abstracts_query_process->filename != "NULL" || $abstracts_query_process->filename != "") {
+  //       $abstracts_query_process_filename = $abstracts_query_process->filename;
+  //       //$abstracts_query_process_filename = l($abstracts_query_process->filename, 'research-migration-project/download/project-file/' . $proposal_data->id);
+  //     } //$abstracts_query_process->filename != "NULL" || $abstracts_query_process->filename != ""
+  //     else {
+  //       $abstracts_query_process_filename = "File not uploaded";
+  //     }
+  //     if ($abstracts_q->is_submitted == '') {
+  //       $url = l('Upload Case Directory', 'research-migration-project/abstract-code/upload');
+  //     } //$abstracts_q->is_submitted == ''
+  //     else {
+  //       if ($abstracts_q->is_submitted == 1) {
+  //         $url = "";
+  //       } //$abstracts_q->is_submitted == 1
+  //       else {
+  //         if ($abstracts_q->is_submitted == 0) {
+  //           $url = l('Edit', 'research-migration-project/abstract-code/upload');
+  //         }
+  //       }
+  //     } //$abstracts_q->is_submitted == 0
+  //   } //$abstracts_query_process == TRUE
+  //   else {
+  //     // $url = l('Upload Case Directory', 'research-migration-project/abstract-code/upload');
+  //     $abstracts_query_process_filename = "File not uploaded";
+  //   }
+  //   $return_html .= '<strong>Contributor Name:</strong><br />' . $proposal_data->name_title . ' ' . $proposal_data->contributor_name . '<br /><br />';
+  //   $return_html .= '<strong>Title of the Research Migration Project:</strong><br />' . $proposal_data->project_title . '<br /><br />';
+  //   $return_html .= '<strong>Uploaded Synopsis Submission:</strong><br />' . $abstract_filename . '<br /><br />';
+  //   $return_html .= '<strong>Uploaded Case Directory:</strong><br />' . $abstracts_query_process_filename . '<br /><br />';
+  //   $return_html .= $url . '<br />';
+  //   return $return_html;
+  // }
+
+
+public function cfd_research_migration_abstract() {
     $user = \Drupal::currentUser();
     $return_html = "";
+
+    // Fetch proposal data
     $proposal_data = cfd_research_migration_get_proposal();
     if (!$proposal_data) {
-      drupal_goto('');
-      return;
-    } //!$proposal_data
-    //$return_html .= l('Upload abstract', 'research-migration-project/abstract-code/upload') . '<br />';
-    /* get experiment list */
-    $query = \Drupal::database()->select('research_migration_submitted_abstracts');
-    $query->fields('research_migration_submitted_abstracts');
-    $query->condition('proposal_id', $proposal_data->id);
-    $abstracts_q = $query->execute()->fetchObject();
-    $query_pro = \Drupal::database()->select('research_migration_proposal');
-    $query_pro->fields('research_migration_proposal');
-    $query_pro->condition('id', $proposal_data->id);
-    $abstracts_pro = $query_pro->execute()->fetchObject();
-    $query_pdf = \Drupal::database()->select('research_migration_submitted_abstracts_file');
-    $query_pdf->fields('research_migration_submitted_abstracts_file');
-    $query_pdf->condition('proposal_id', $proposal_data->id);
-    $query_pdf->condition('filetype', 'A');
-    $abstracts_pdf = $query_pdf->execute()->fetchObject();
-    if ($abstracts_pdf == TRUE) {
-      if ($abstracts_pdf->filename != "NULL" || $abstracts_pdf->filename != "") {
-        $abstract_filename = $abstracts_pdf->filename;
-        //$abstract_filename = l($abstracts_pdf->filename, 'research-migration-project/download/project-file/' . $proposal_data->id);
-      } //$abstracts_pdf->filename != "NULL" || $abstracts_pdf->filename != ""
-      else {
-        $abstract_filename = "File not uploaded";
-      }
-    } //$abstracts_pdf == TRUE
-    else {
-      $abstract_filename = "File not uploaded";
+        return;
     }
-    $query_process = \Drupal::database()->select('research_migration_submitted_abstracts_file');
-    $query_process->fields('research_migration_submitted_abstracts_file');
-    $query_process->condition('proposal_id', $proposal_data->id);
-    $query_process->condition('filetype', 'S');
-    $abstracts_query_process = $query_process->execute()->fetchObject();
-    if ($abstracts_query_process == TRUE) {
-      if ($abstracts_query_process->filename != "NULL" || $abstracts_query_process->filename != "") {
-        $abstracts_query_process_filename = $abstracts_query_process->filename;
-        //$abstracts_query_process_filename = l($abstracts_query_process->filename, 'research-migration-project/download/project-file/' . $proposal_data->id);
-      } //$abstracts_query_process->filename != "NULL" || $abstracts_query_process->filename != ""
-      else {
-        $abstracts_query_process_filename = "File not uploaded";
-      }
-      if ($abstracts_q->is_submitted == '') {
-        $url = l('Upload Case Directory', 'research-migration-project/abstract-code/upload');
-      } //$abstracts_q->is_submitted == ''
-      else {
-        if ($abstracts_q->is_submitted == 1) {
-          $url = "";
-        } //$abstracts_q->is_submitted == 1
-        else {
-          if ($abstracts_q->is_submitted == 0) {
-            $url = l('Edit', 'research-migration-project/abstract-code/upload');
-          }
+
+    // Fetch submitted abstracts
+    $database = Database::getConnection();
+    $abstracts_q = $database->select('research_migration_submitted_abstracts', 'rsa')
+        ->fields('rsa')
+        ->condition('proposal_id', $proposal_data->id)
+        ->execute()
+        ->fetchObject();
+
+    $abstracts_pro = $database->select('research_migration_proposal', 'rmp')
+        ->fields('rmp')
+        ->condition('id', $proposal_data->id)
+        ->execute()
+        ->fetchObject();
+
+    // Fetch synopsis submission file
+    $abstracts_pdf = $database->select('research_migration_submitted_abstracts_file', 'rsaf')
+        ->fields('rsaf')
+        ->condition('proposal_id', $proposal_data->id)
+        ->condition('filetype', 'A')
+        ->execute()
+        ->fetchObject();
+
+    $abstract_filename = ($abstracts_pdf && !empty($abstracts_pdf->filename))
+        ? $abstracts_pdf->filename
+        : "File not uploaded";
+
+    // Fetch case directory file
+    $abstracts_query_process = $database->select('research_migration_submitted_abstracts_file', 'rsaf')
+        ->fields('rsaf')
+        ->condition('proposal_id', $proposal_data->id)
+        ->condition('filetype', 'S')
+        ->execute()
+        ->fetchObject();
+
+    $abstracts_query_process_filename = ($abstracts_query_process && !empty($abstracts_query_process->filename))
+        ? $abstracts_query_process->filename
+        : "File not uploaded";
+
+    // Determine upload/edit link
+    $url = "";
+    if (!empty($abstracts_q->is_submitted)) {
+        if ($abstracts_q->is_submitted == 0) {
+            $upload_url = Url::fromRoute('cfd_research_migration.abstract_code_upload');
+            $url = Link::fromTextAndUrl(t('Edit'), $upload_url)->toString();
         }
-      } //$abstracts_q->is_submitted == 0
-    } //$abstracts_query_process == TRUE
-    else {
-      $url = l('Upload Case Directory', 'research-migration-project/abstract-code/upload');
-      $abstracts_query_process_filename = "File not uploaded";
+    } else {
+        $upload_url = Url::fromRoute('cfd_research_migration.abstract_code_upload');
+        $url = Link::fromTextAndUrl(t('Upload Case Directory'), $upload_url)->toString();
     }
+
+    // Generate output
     $return_html .= '<strong>Contributor Name:</strong><br />' . $proposal_data->name_title . ' ' . $proposal_data->contributor_name . '<br /><br />';
     $return_html .= '<strong>Title of the Research Migration Project:</strong><br />' . $proposal_data->project_title . '<br /><br />';
     $return_html .= '<strong>Uploaded Synopsis Submission:</strong><br />' . $abstract_filename . '<br /><br />';
     $return_html .= '<strong>Uploaded Case Directory:</strong><br />' . $abstracts_query_process_filename . '<br /><br />';
     $return_html .= $url . '<br />';
-    return $return_html;
-  }
+
+    return [
+        '#markup' => $return_html,
+    ];
+}
 
   public function cfd_research_migration_download_full_project() {
     $user = \Drupal::currentUser();
@@ -405,7 +730,7 @@ class DefaultController extends ControllerBase {
       }
     } //$zip_file_count > 0
     else {
-      drupal_set_message("There are no research migration project in this proposal to download", 'error');
+      \Drupal::messenger()->addMessage("There are no research migration project in this proposal to download", 'error');
       drupal_goto('circuit-simulation-project/full-download/project');
     }
   }
@@ -609,7 +934,7 @@ class DefaultController extends ControllerBase {
     if ($exist_id) {
       if ($exist_id->id) {
         if ($exist_id->id < 1) {
-          drupal_set_message('<strong>You need to propose a <a href="https://cfd.fossee.in/research-migration-project/proposal">Research Migration Proposal</a></strong> or if you have already proposed then your Research Migration is under reviewing process', 'status');
+          \Drupal::messenger()->addMessage('<strong>You need to propose a <a href="https://cfd.fossee.in/research-migration-project/proposal">Research Migration Proposal</a></strong> or if you have already proposed then your Research Migration is under reviewing process', 'status');
           return '';
         } //$exist_id->id < 3
         else {
@@ -648,7 +973,7 @@ class DefaultController extends ControllerBase {
       }
     } //$exist_id->id
     else {
-      drupal_set_message('<strong>You need to propose a <a href="https://cfd.fossee.in/research-migration-project/proposal">Research Migration Proposal</a></strong> or if you have already proposed then your Research Migration is under reviewing process', 'status');
+      \Drupal::messenger()->addMessage('<strong>You need to propose a <a href="https://cfd.fossee.in/research-migration-project/proposal">Research Migration Proposal</a></strong> or if you have already proposed then your Research Migration is under reviewing process', 'status');
       $page_content = "<span style='color:red;'> No certificate available </span>";
       return $page_content;
     }
