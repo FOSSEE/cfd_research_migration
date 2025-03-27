@@ -10,17 +10,27 @@ namespace Drupal\cfd_research_migration\Form;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
+use Drupal\Core\Form\ConfigFormBase;
 
-class CfdResearchMigrationSettingsForm extends FormBase {
+class CfdResearchMigrationSettingsForm extends ConfigFormBase {
 
-  /**
-   * {@inheritdoc}
-   */
-  public function getFormId() {
-    return 'cfd_research_migration_settings_form';
-  }
+    /**
+     * {@inheritdoc}
+     */
+    public function getFormId() {
+      return 'cfd_research_migration_settings_form';
+    }
+    protected function getEditableConfigNames() {
+      return [
+        'cfd_research_migration.settings',
+      ];
+    }
+  
+
+
 
   public function buildForm(array $form, \Drupal\Core\Form\FormStateInterface $form_state) {
+    $config = $this->config('cfd_research_migration.settings');
     $form['emails'] = [
       '#type' => 'textfield',
       '#title' => t('(Bcc) Notification emails'),
@@ -28,7 +38,7 @@ class CfdResearchMigrationSettingsForm extends FormBase {
       '#size' => 50,
       '#maxlength' => 255,
       '#required' => TRUE,
-      '#default_value' => variable_get('research_migration_emails', ''),
+      '#default_value' => $config->get('research_migration_emails', ''),
     ];
     $form['cc_emails'] = [
       '#type' => 'textfield',
@@ -37,7 +47,7 @@ class CfdResearchMigrationSettingsForm extends FormBase {
       '#size' => 50,
       '#maxlength' => 255,
       '#required' => TRUE,
-      '#default_value' => variable_get('research_migration_cc_emails', ''),
+      '#default_value' => $config->get('research_migration_cc_emails', ''),
     ];
     $form['from_email'] = [
       '#type' => 'textfield',
@@ -46,7 +56,7 @@ class CfdResearchMigrationSettingsForm extends FormBase {
       '#size' => 50,
       '#maxlength' => 255,
       '#required' => TRUE,
-      '#default_value' => variable_get('research_migration_from_email', ''),
+      '#default_value' => $config->get('research_migration_from_email', ''),
     ];
     $form['extensions']['resource_upload'] = [
       '#type' => 'textfield',
@@ -55,7 +65,7 @@ class CfdResearchMigrationSettingsForm extends FormBase {
       '#size' => 50,
       '#maxlength' => 255,
       '#required' => TRUE,
-      '#default_value' => variable_get('resource_upload_extensions', ''),
+      '#default_value' => $config->get('resource_upload_extensions', ''),
     ];
     $form['extensions']['abstract_upload'] = [
       '#type' => 'textfield',
@@ -64,7 +74,7 @@ class CfdResearchMigrationSettingsForm extends FormBase {
       '#size' => 50,
       '#maxlength' => 255,
       '#required' => TRUE,
-      '#default_value' => variable_get('research_migration_abstract_upload_extensions', ''),
+      '#default_value' => $config->get('research_migration_abstract_upload_extensions', ''),
     ];
     $form['extensions']['research_migration_upload'] = [
       '#type' => 'textfield',
@@ -73,7 +83,7 @@ class CfdResearchMigrationSettingsForm extends FormBase {
       '#size' => 50,
       '#maxlength' => 255,
       '#required' => TRUE,
-      '#default_value' => variable_get('research_migration_project_files_extensions', ''),
+      '#default_value' => $config->get('research_migration_project_files_extensions', ''),
     ];
     $form['extensions']['list_of_available_projects_file'] = [
       '#type' => 'textfield',
@@ -82,28 +92,35 @@ class CfdResearchMigrationSettingsForm extends FormBase {
       '#size' => 50,
       '#maxlength' => 255,
       '#required' => TRUE,
-      '#default_value' => variable_get('list_of_available_projects_file', ''),
+      '#default_value' => $config->get('list_of_available_projects_file', ''),
     ];
     $form['submit'] = [
       '#type' => 'submit',
       '#value' => t('Submit'),
     ];
-    return $form;
+    // return $form;
+    return parent::buildForm($form, $form_state);
   }
 
   public function validateForm(array &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
+    parent::validateForm($form, $form_state);
+    // return;
     return;
   }
 
   public function submitForm(array &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
-    variable_set('research_migration_emails', $form_state->getValue(['emails']));
-    variable_set('research_migration_cc_emails', $form_state->getValue(['cc_emails']));
-    variable_set('research_migration_from_email', $form_state->getValue(['from_email']));
-    variable_set('resource_upload_extensions', $form_state->getValue(['resource_upload']));
-    variable_set('research_migration_abstract_upload_extensions', $form_state->getValue(['abstract_upload']));
-    variable_set('research_migration_project_files_extensions', $form_state->getValue(['research_migration_upload']));
-    variable_set('list_of_available_projects_file', $form_state->getValue(['list_of_available_projects_file']));
-    drupal_set_message(t('Settings updated'), 'status');
+    parent::submitForm($form, $form_state);
+    $this->config('cfd_research_migration.settings')
+    
+    ->set('research_migration_emails', $form_state->getValue(['emails']))
+    ->set('research_migration_cc_emails', $form_state->getValue(['cc_emails']))
+    ->set('research_migration_from_email', $form_state->getValue(['from_email']))
+    ->set('resource_upload_extensions', $form_state->getValue(['resource_upload']))
+    ->set('research_migration_abstract_upload_extensions', $form_state->getValue(['abstract_upload']))
+    ->set('research_migration_project_files_extensions', $form_state->getValue(['research_migration_upload']))
+    ->set('list_of_available_projects_file', $form_state->getValue(['list_of_available_projects_file']))
+    ->save();
+    \Drupal::messenger()->addMessage($this->t('Settings updated'), 'status');
   }
 
 }

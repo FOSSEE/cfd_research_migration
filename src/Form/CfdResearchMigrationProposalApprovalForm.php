@@ -23,7 +23,10 @@ class CfdResearchMigrationProposalApprovalForm extends FormBase {
   public function buildForm(array $form, \Drupal\Core\Form\FormStateInterface $form_state) {
     $user = \Drupal::currentUser();
     /* get current proposal */
-    $proposal_id = (int) arg(3);
+    // $proposal_id = (int) arg(3);
+    $route_match = \Drupal::routeMatch();
+
+    $proposal_id = (int) $route_match->getParameter('proposal_id');
     $query = \Drupal::database()->select('research_migration_proposal');
     $query->fields('research_migration_proposal');
     $query->condition('id', $proposal_id);
@@ -38,14 +41,14 @@ class CfdResearchMigrationProposalApprovalForm extends FormBase {
         /* everything ok */
       } //$proposal_data = $proposal_q->fetchObject()
       else {
-        drupal_set_message(t('Invalid proposal selected. Please try again.'), 'error');
-        drupal_goto('research-migration-project/manage-proposal');
+        \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
+        // drupal_goto('research-migration-project/manage-proposal');
         return;
       }
     } //$proposal_q
     else {
-      drupal_set_message(t('Invalid proposal selected. Please try again.'), 'error');
-      drupal_goto('research-migration-project/manage-proposal');
+      \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
+      // drupal_goto('research-migration-project/manage-proposal');
       return;
     }
     if ($proposal_data->faculty_name == '') {
@@ -78,13 +81,19 @@ class CfdResearchMigrationProposalApprovalForm extends FormBase {
     $simulation_type = $simulation_type_data->simulation_type;
     $form['contributor_name'] = [
       '#type' => 'item',
-      '#markup' => l($proposal_data->name_title . ' ' . $proposal_data->contributor_name, 'user/' . $proposal_data->uid),
+      // '#markup' => l($proposal_data->name_title . ' ' . $proposal_data->contributor_name, 'user/' . $proposal_data->uid),
+      
+'#markup' => Link::fromTextAndUrl(
+  $proposal_data->name_title . ' ' . $proposal_data->contributor_name,
+  Url::fromRoute('entity.user.canonical', ['user' => $proposal_data->uid])
+)->toString(),
+
       '#title' => t('Student name'),
     ];
     $form['student_email_id'] = [
       '#title' => t('Student Email'),
       '#type' => 'item',
-      '#markup' => user_load($proposal_data->uid)->mail,
+      // '#markup' => user_load($proposal_data->uid)->mail,
       '#title' => t('Email'),
     ];
     $form['contributor_contact_no'] = [
@@ -177,7 +186,15 @@ class CfdResearchMigrationProposalApprovalForm extends FormBase {
       $form['abstract_file_path'] = [
         '#type' => 'item',
         '#title' => t('Synopsis file '),
-        '#markup' => l($resource_file, 'research-migration-project/download/project-file/' . $proposal_id) . "",
+        // '#markup' => l($resource_file, 'research-migration-project/download/project-file/' . $proposal_id) .
+        //  "",
+
+        '#markup' => Link::fromTextAndUrl(
+  $resource_file,
+  Url::fromUserInput('/research-migration-project/download/project-file/' . $proposal_id)
+)->toString(),
+
+     
       ];
     } //$proposal_data->user_defined_compound_filepath != ""
     else {
@@ -218,7 +235,11 @@ class CfdResearchMigrationProposalApprovalForm extends FormBase {
     ];
     $form['cancel'] = [
       '#type' => 'item',
-      '#markup' => l(t('Cancel'), 'research-migration-project/manage-proposal'),
+      // '#markup' => l(t('Cancel'), 'research-migration-project/manage-proposal'),
+      '#markup' => Link::fromTextAndUrl(
+  $this->t('Cancel'),
+  Url::fromUserInput('/research-migration-project/manage-proposal/pending')
+)->toString(),
     ];
     return $form;
   }
@@ -244,13 +265,13 @@ class CfdResearchMigrationProposalApprovalForm extends FormBase {
         /* everything ok */
       } //$proposal_data = $proposal_q->fetchObject()
       else {
-        drupal_set_message(t('Invalid proposal selected. Please try again.'), 'error');
+        \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
         drupal_goto('research-migration-project/manage-proposal');
         return;
       }
     } //$proposal_q
     else {
-      drupal_set_message(t('Invalid proposal selected. Please try again.'), 'error');
+      \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
       drupal_goto('research-migration-project/manage-proposal');
       return;
     }
@@ -280,10 +301,10 @@ class CfdResearchMigrationProposalApprovalForm extends FormBase {
         'Bcc' => $bcc,
       ];
       if (!drupal_mail('research_migration', 'research_migration_proposal_approved', $email_to, language_default(), $params, $from, TRUE)) {
-        drupal_set_message('Error sending email message.', 'error');
+        \Drupal::messenger()->addMessage('Error sending email message.', 'error');
       }
 
-      drupal_set_message('CFD research migration proposal No. ' . $proposal_id . ' approved. User has been notified of the approval.', 'status');
+      \Drupal::messenger()->addMessage('CFD research migration proposal No. ' . $proposal_id . ' approved. User has been notified of the approval.', 'status');
       drupal_goto('research-migration-project/manage-proposal');
       return;
     } //$form_state['values']['approval'] == 1
@@ -315,10 +336,10 @@ class CfdResearchMigrationProposalApprovalForm extends FormBase {
           'Bcc' => $bcc,
         ];
         if (!drupal_mail('research_migration', 'research_migration_proposal_disapproved', $email_to, language_default(), $params, $from, TRUE)) {
-          drupal_set_message('Error sending email message.', 'error');
+          \Drupal::messenger()->addMessage('Error sending email message.', 'error');
         }
 
-        drupal_set_message('CFD research migration proposal No. ' . $proposal_id . ' dis-approved. User has been notified of the dis-approval.', 'error');
+        \Drupal::messenger()->addMessage('CFD research migration proposal No. ' . $proposal_id . ' dis-approved. User has been notified of the dis-approval.', 'error');
         drupal_goto('research-migration-project/manage-proposal');
         return;
       }

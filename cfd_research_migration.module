@@ -552,7 +552,7 @@ function cfd_research_migration_get_proposal()
 /*************************************************************************/
 /***** Function To convert only first charater of string in uppercase ****/
 /*************************************************************************/
-/*function ucname($string)
+function ucname($string)
 {
 $string = ucwords(strtolower($string));
 foreach (array(
@@ -566,7 +566,7 @@ $string = implode($delimiter, array_map('ucfirst', explode($delimiter, $string))
 } //strpos($string, $delimiter) !== false
 } //array( '-', '\'') as $delimiter
 return $string;
-}*/
+}
 function _rm_df_sentence_case($string)
 {
     $string = ucwords(strtolower($string));

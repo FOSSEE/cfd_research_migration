@@ -30,6 +30,114 @@ class CfdResearchMigrationGlobalFunction{
   
       return $states + $results;
   }
+  function _df_list_of_cities()
+{
+    $city = array(
+        0 => '-Select-',
+    );
+    $query = \Drupal::database()->select('list_cities_of_india');
+    $query->fields('list_cities_of_india');
+    $query->orderBy('city', 'ASC');
+    $city_list = $query->execute();
+    while ($city_list_data = $city_list->fetchObject()) {
+        $city[$city_list_data->city] = $city_list_data->city;
+    } //$city_list_data = $city_list->fetchObject()
+    return $city;
+}
+function _rm_df_list_of_pincodes()
+{
+    $pincode = array(
+        0 => '-Select-',
+    );
+    $query = \Drupal::database()->select('list_of_all_india_pincode');
+    $query->fields('list_of_all_india_pincode');
+    $query->orderBy('pincode', 'ASC');
+    $pincode_list = $query->execute();
+    while ($pincode_list_data = $pincode_list->fetchObject()) {
+        $pincode[$pincode_list_data->pincode] = $pincode_list_data->pincode;
+    } //$pincode_list_data = $pincode_list->fetchObject()
+    return $pincode;
+}
   
+function _rm_df_list_of_states()
+{
+    $states = array(
+        0 => '-Select-',
+    );
+    $query = \Drupal::database()->select('list_states_of_india');
+    $query->fields('list_states_of_india');
+    //$query->orderBy('', '');
+    $states_list = $query->execute();
+    while ($states_list_data = $states_list->fetchObject()) {
+        $states[$states_list_data->state] = $states_list_data->state;
+    } //$states_list_data = $states_list->fetchObject()
+    return $states;
+}
+function cfd_research_migration_path()
+{
+    return $_SERVER['DOCUMENT_ROOT'] . base_path() . 'cfd_uploads/research_migration_uploads/';
+}
+function _rm_list_of_simulation_types(){
+    $simulation_types = array();
+    $query = \Drupal::database()->select('research_migration_simulation_type');
+    $query->fields('research_migration_simulation_type');
+    $simulation_type_list = $query->execute();
+    while ($simulation_type_data = $simulation_type_list->fetchObject()) {
+        $simulation_types[$simulation_type_data->id] = $simulation_type_data->simulation_type;
+    }
+    return $simulation_types;
+}
+function _rm_list_of_solvers($simulation_id){
+    $simulation_id = $simulation_id;
+    $solvers = array(
+        0 => '-Select-',
+        );
+    $query = \Drupal::database()->select('research_migration_solvers');
+    $query->fields('research_migration_solvers');
+    $query->condition('simulation_type_id',$simulation_id);
+    $solvers_list = $query->execute();
+    while($solvers_data = $solvers_list->fetchObject()){
+        $solvers[$solvers_data->solver_name] = $solvers_data->solver_name;
+    }
+    return $solvers;
+}
+function _rm_df_dir_name($project, $proposar_name)
+{
+    $project_title = $this->ucname($project);
+    $proposar_name = $this->ucname($proposar_name);
+    $dir_name = $project_title . ' By ' . $proposar_name;
+    $directory_name = str_replace("__", "_", str_replace(" ", "_", str_replace("/", "_", trim($dir_name))));
+    return $directory_name;
+}
+
+function ucname($string)
+{
+$string = ucwords(strtolower($string));
+foreach (array(
+'-',
+'\''
+) as $delimiter)
+{
+if (strpos($string, $delimiter) !== false)
+{
+$string = implode($delimiter, array_map('ucfirst', explode($delimiter, $string)));
+} //strpos($string, $delimiter) !== false
+} //array( '-', '\'') as $delimiter
+return $string;
+}
+function _df_sentence_case($string)
+{
+    $string = ucwords(strtolower($string));
+    foreach (array(
+        '-',
+        '\'',
+    ) as $delimiter) {
+        if (strpos($string, $delimiter) !== false) {
+            $string = implode($delimiter, array_map('ucfirst', explode($delimiter, $string)));
+        } //strpos($string, $delimiter) !== false
+    } //array( '-', '\'') as $delimiter
+    return $string;
+}
+
 }
  

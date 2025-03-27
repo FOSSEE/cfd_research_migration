@@ -10,6 +10,13 @@ namespace Drupal\cfd_research_migration\Form;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Drupal\user\Entity\User;
+use Drupal\Core\Url;
+use Drupal\Core\Link;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Drupal\r_case_study\Form\stdClass;
+
 
 class CfdResearchMigrationEditUploadAbstractCodeForm extends FormBase {
 
@@ -24,7 +31,10 @@ class CfdResearchMigrationEditUploadAbstractCodeForm extends FormBase {
     $user = \Drupal::currentUser();
     $form['#attributes'] = ['enctype' => "multipart/form-data"];
     /* get current proposal */
-    $proposal_id = (int) arg(3);
+    // $proposal_id = (int) arg(3);
+    $route_match = \Drupal::routeMatch();
+
+    $proposal_id = (int) $route_match->getParameter('proposal_id');
     $uid = $user->uid;
     $query = \Drupal::database()->select('research_migration_proposal');
     $query->fields('research_migration_proposal');
@@ -35,14 +45,14 @@ class CfdResearchMigrationEditUploadAbstractCodeForm extends FormBase {
         /* everything ok */
       } //$proposal_data = $proposal_q->fetchObject()
       else {
-        drupal_set_message(t('Invalid proposal selected. Please try again.'), 'error');
-        drupal_goto('research-migration-project/manage-proposal/edit-upload-file');
+        \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
+        // drupal_goto('research-migration-project/manage-proposal/edit-upload-file');
         return;
       }
     } //$proposal_q
     else {
-      drupal_set_message(t('Invalid proposal selected. Please try again.'), 'error');
-      drupal_goto('research-migration-project/manage-proposal/edit-upload-file');
+      \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
+      // drupal_goto('research-migration-project/manage-proposal/edit-upload-file');
       return;
     }
     $query = \Drupal::database()->select('research_migration_submitted_abstracts');
@@ -94,7 +104,7 @@ class CfdResearchMigrationEditUploadAbstractCodeForm extends FormBase {
     ];
     $form['cancel'] = [
       '#type' => 'item',
-      '#markup' => l(t('Cancel'), 'research-migration-project/manage-proposal/edit-upload-file'),
+      // '#markup' => l(t('Cancel'), 'research-migration-project/manage-proposal/edit-upload-file'),
     ];
     return $form;
   }
@@ -102,7 +112,7 @@ class CfdResearchMigrationEditUploadAbstractCodeForm extends FormBase {
   public function validateForm(array &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
 
     if (!($_FILES['files']['name']['upload_research_migration_abstract'] || $_FILES['files']['name']['upload_research_migration_developed_process'])) {
-      drupal_set_message('No files uploaded', 'error');
+      \Drupal::messenger()->addMessage('No files uploaded', 'error');
       return;
     }
     if (isset($_FILES['files'])) {
@@ -152,7 +162,7 @@ class CfdResearchMigrationEditUploadAbstractCodeForm extends FormBase {
       } //$_FILES['files']['name'] as $file_form_name => $file_name
     }
     else {
-      drupal_set_message('No files uploaded', 'error');
+      \Drupal::messenger()->addMessage('No files uploaded', 'error');
       return $form_state;
     }
 
@@ -169,7 +179,7 @@ class CfdResearchMigrationEditUploadAbstractCodeForm extends FormBase {
     $proposal_data = $proposal_q->fetchObject();
     $proposal_id = $proposal_data->id;
     if (!$proposal_data) {
-      drupal_goto('');
+      // drupal_goto('');
       return;
     } //!$proposal_data
     $proposal_id = $proposal_data->id;
@@ -218,36 +228,36 @@ class CfdResearchMigrationEditUploadAbstractCodeForm extends FormBase {
           ];
           \Drupal::database()->query($query, $args, ['return' => Database::RETURN_INSERT_ID]);
 
-          drupal_set_message($file_name . ' file updated successfully.', 'status');
+          \Drupal::messenger()->addMessage($file_name . ' file updated successfully.', 'status');
 
         }
         else {
-          drupal_set_message($file_name . ' file not updated successfully.', 'error');
+          \Drupal::messenger()->addMessage($file_name . ' file not updated successfully.', 'error');
         }
       }
     } //$_FILES['files']['name'] as $file_form_name => $file_name
     /* sending email */
-    $email_to = $user->mail;
-    $from = variable_get('research_migration_from_email', '');
-    $bcc = variable_get('research_migration_emails', '');
-    $cc = variable_get('research_migration_cc_emails', '');
-    $params['abstract_edit_file_uploaded']['proposal_id'] = $proposal_id;
-    $params['abstract_edit_file_uploaded']['user_id'] = $user->uid;
-    $params['abstract_edit_file_uploaded']['abs_file'] = $abs_file_name;
-    $params['abstract_edit_file_uploaded']['proj_file'] = $proj_file_name;
-    $params['abstract_edit_file_uploaded']['headers'] = [
-      'From' => $from,
-      'MIME-Version' => '1.0',
-      'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
-      'Content-Transfer-Encoding' => '8Bit',
-      'X-Mailer' => 'Drupal',
-      'Cc' => $cc,
-      'Bcc' => $bcc,
-    ];
-    if (!drupal_mail('research_migration', 'abstract_edit_file_uploaded', $email_to, language_default(), $params, $from, TRUE)) {
-      drupal_set_message('Error sending email message.', 'error');
-    }
-    drupal_goto('research-migration-project/abstract-code/edit-upload-files');
+    // $email_to = $user->mail;
+    // $from = variable_get('research_migration_from_email', '');
+    // $bcc = variable_get('research_migration_emails', '');
+    // $cc = variable_get('research_migration_cc_emails', '');
+    // $params['abstract_edit_file_uploaded']['proposal_id'] = $proposal_id;
+    // $params['abstract_edit_file_uploaded']['user_id'] = $user->uid;
+    // $params['abstract_edit_file_uploaded']['abs_file'] = $abs_file_name;
+    // $params['abstract_edit_file_uploaded']['proj_file'] = $proj_file_name;
+    // $params['abstract_edit_file_uploaded']['headers'] = [
+    //   'From' => $from,
+    //   'MIME-Version' => '1.0',
+    //   'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
+    //   'Content-Transfer-Encoding' => '8Bit',
+    //   'X-Mailer' => 'Drupal',
+    //   'Cc' => $cc,
+    //   'Bcc' => $bcc,
+    // ];
+    // if (!drupal_mail('research_migration', 'abstract_edit_file_uploaded', $email_to, language_default(), $params, $from, TRUE)) {
+    //   \Drupal::messenger()->addMessage('Error sending email message.', 'error');
+    // }
+    // drupal_goto('research  -migration-project/abstract-code/edit-upload-files');
   }
 
 }

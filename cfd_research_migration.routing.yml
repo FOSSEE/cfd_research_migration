@@ -62,21 +62,21 @@ cfd_research_migration.proposal_edit_file_all:
   requirements:
     _permission: 'Research Migration manage proposal'
 cfd_research_migration.proposal_approval_form:
-  path: /research-migration-project/manage-proposal/approve
+  path: /research-migration-project/manage-proposal/approve/{id?}
   defaults:
     _title: 'Approve Proposal'
     _form: \Drupal\cfd_research_migration\Form\CfdResearchMigrationProposalApprovalForm
   requirements:
     _permission: 'Research Migration manage proposal'
 cfd_research_migration.proposal_edit_form:
-  path: /research-migration-project/manage-proposal/edit
+  path: /research-migration-project/manage-proposal/edit/{id?}
   defaults:
     _title: 'Edit Proposal'
     _form: \Drupal\cfd_research_migration\Form\CfdResearchMigrationProposalEditForm
   requirements:
     _permission: 'Research Migration manage proposal'
 cfd_research_migration.proposal_status_form:
-  path: /research-migration-project/manage-proposal/status
+  path: /research-migration-project/manage-proposal/status/{id?}
   defaults:
     _title: 'Proposal Status'
     _form: \Drupal\cfd_research_migration\Form\CfdResearchMigrationProposalStatusForm

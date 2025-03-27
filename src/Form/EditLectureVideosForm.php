@@ -7,15 +7,10 @@
 
 namespace Drupal\cfd_research_migration\Form;
 
-
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Render\Element;
-use Symfony\Component\HttpFoundation\RedirectResponse;
-use Drupal\user\Entity\User;
-use Drupal\Core\Url;
-use Drupal\Core\Link;
-
+use Drupal\Core\Database\Database;
+use Drupal\Core\Messenger\MessengerInterface;
 
 class EditLectureVideosForm extends FormBase {
 
@@ -26,25 +21,38 @@ class EditLectureVideosForm extends FormBase {
     return 'edit_lecture_videos_form';
   }
 
-  public function buildForm(array $form, \Drupal\Core\Form\FormStateInterface $form_state) {
-    $user = \Drupal::currentUser();
-    /* get current proposal */
-    // $video_id = (int) arg(2);
-    $route_match = \Drupal::routeMatch();
+  /**
+   * Fetch lecture video data from the database.
+   */
+  protected function getLectureVideoData($video_id) {
+    $connection = Database::getConnection();
+    $query = $connection->select('lecture_videos', 'lv')
+      ->fields('lv')
+      ->condition('id', $video_id)
+      ->execute()
+      ->fetchObject();
 
-$video_id = (int) $route_match->getParameter('video_id');
-// var_dump($video_id);die;
-    //$proposal_q = \Drupal::database()->query("SELECT * FROM {research_migration_proposal} WHERE id = %d", $proposal_id);
-    $query = \Drupal::database()->select('lecture_videos');
-    $query->fields('lecture_videos');
-    $query->condition('id', $video_id);
-    $lecture_video_q = $query->execute();
-    $lecture_video_data = $lecture_video_q->fetchObject();
-    // var_dump($lecture_video_data);die;
+    return $query ?: NULL; // Return NULL if no data is found.
+  }
+
+  /**
+   * Build the form.
+   */
+  public function buildForm(array $form, FormStateInterface $form_state) {
+    $route_match = \Drupal::routeMatch();
+    $video_id = (int) $route_match->getParameter('video_id');
+
+    // Fetch video data.
+    $lecture_video_data = $this->getLectureVideoData($video_id);
+
+    if (!$lecture_video_data) {
+      $this->messenger()->addError($this->t('Lecture video not found.'));
+      return $form;
+    }
 
     $form['video_sno'] = [
       '#type' => 'textfield',
-      '#title' => t('S.No of the video'),
+      '#title' => $this->t('S.No of the video'),
       '#required' => TRUE,
       '#disabled' => TRUE,
       '#default_value' => $lecture_video_data->video_sno,
@@ -52,57 +60,63 @@ $video_id = (int) $route_match->getParameter('video_id');
 
     $form['title_of_video'] = [
       '#type' => 'textfield',
-      '#title' => t('Title of the video lecture'),
-      // '#size' => 30,
-      // '#maxlength' => 50,
-        '#required' => TRUE,
+      '#title' => $this->t('Title of the video lecture'),
+      '#required' => TRUE,
       '#default_value' => $lecture_video_data->video_title,
     ];
 
     $form['description_of_video'] = [
       '#type' => 'text_format',
       '#format' => $lecture_video_data->video_description_text_format,
-      '#title' => 'Description of the video',
+      '#title' => $this->t('Description of the video'),
       '#required' => TRUE,
       '#default_value' => $lecture_video_data->video_description_text,
     ];
+
     $form['link_to_video'] = [
       '#type' => 'textfield',
-      "#title" => "Paste the URL of the video lecture",
+      "#title" => $this->t("Paste the URL of the video lecture"),
       '#size' => 255,
       '#maxlength' => 255,
       '#required' => TRUE,
       '#default_value' => $lecture_video_data->video_link,
     ];
-    $form["link_to_script_file"] = [
+
+    $form['link_to_script_file'] = [
       "#type" => "textfield",
-      "#title" => "Paste the URL of the script file  of the video lecture",
+      "#title" => $this->t("Paste the URL of the script file of the video lecture"),
       '#size' => 255,
       '#maxlength' => 255,
       '#required' => TRUE,
       '#default_value' => $lecture_video_data->script_file_link,
     ];
-    //var_dump($lecture_video_data->video_visibility);die;
+
     $form['lecture_visibility'] = [
       '#type' => 'select',
-      '#title' => t('Do you want to disable this lecture?'),
-      '#default_value' => t($lecture_video_data->video_visibility),
+      '#title' => $this->t('Do you want to disable this lecture?'),
+      '#default_value' => $lecture_video_data->video_visibility ?? 'N',
       '#options' => [
-        'Y' => t('Yes'),
-        'N' => t('No'),
+        'Y' => $this->t('Yes'),
+        'N' => $this->t('No'),
       ],
       '#required' => TRUE,
     ];
-    $form["submit"] = [
+
+    $form['submit'] = [
       '#type' => 'submit',
-      '#value' => 'Submit',
+      '#value' => $this->t('Submit'),
     ];
 
     return $form;
   }
 
-  public function submitForm(array &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
-    $v = $form_state->getValues();
+  /**
+   * Submit form handler.
+   */
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+    $values = $form_state->getValues();
+    $video_id = (int) \Drupal::routeMatch()->getParameter('video_id');
+
     $query = "UPDATE lecture_videos SET
             video_title = :video_title,
             video_description_text = :video_description_text,
@@ -110,20 +124,20 @@ $video_id = (int) $route_match->getParameter('video_id');
             script_file_link = :script_file_link,
             video_link = :video_link,
             video_visibility = :video_visibility
-            WHERE video_sno = :video_sno";
-    $args = [
-      ":video_title" => $v['title_of_video'],
-      ":video_description_text" => $v['description_of_video']['value'],
-      ":video_description_text_format" => $v['description_of_video']['format'],
-      ":script_file_link" => $v['link_to_script_file'],
-      ":video_link" => $v['link_to_video'],
-      ":video_visibility" => $v['lecture_visibility'],
-      ":video_sno" => $v['video_sno'],
-    ];
-    $result = \Drupal::database()->query($query, $args);
-    drupal_set_message('Video details updated successfully', 'status');
-    // drupal_goto('lecture-videos/manage');
-  }
+            WHERE id = :video_id";
 
+    $args = [
+      ":video_title" => $values['title_of_video'],
+      ":video_description_text" => $values['description_of_video']['value'],
+      ":video_description_text_format" => $values['description_of_video']['format'],
+      ":script_file_link" => $values['link_to_script_file'],
+      ":video_link" => $values['link_to_video'],
+      ":video_visibility" => $values['lecture_visibility'],
+      ":video_id" => $video_id,
+    ];
+
+    \Drupal::database()->query($query, $args);
+    $this->messenger()->addStatus($this->t('Video details updated successfully'));
+  }
 }
 ?>

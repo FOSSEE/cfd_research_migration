@@ -79,7 +79,7 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
     $form['student_email_id'] = [
       '#type' => 'item',
       '#title' => t('Email'),
-      '#markup' => $user_data->mail,
+      '#markup' => $user->getEmail(),
     ];
     $form['university'] = [
       '#type' => 'textfield',
@@ -204,7 +204,7 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
     $form['city'] = [
       '#type' => 'select',
       '#title' => t('City'),
-      '#options' => _df_list_of_cities(),
+      '#options' => \Drupal::service("cfd_research_migration_global")->_df_list_of_cities(),
       '#default_value' => $proposal_data->city,
       '#states' => [
         'visible' => [
