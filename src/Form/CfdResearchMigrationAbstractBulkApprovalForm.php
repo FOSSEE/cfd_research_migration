@@ -108,10 +108,10 @@ function ajax_bulk_research_migration_abstract_details_callback(array &$form, Fo
 
   if ($research_migration_project_default_value != 0) {
     // Update research migration details.
-    $response->addCommand(new HtmlCommand('#ajax_selected_research_migration', _research_migration_details($research_migration_project_default_value)));
+    $response->addCommand(new HtmlCommand('#ajax_selected_research_migration', $this->_research_migration_details($research_migration_project_default_value)));
 
     // Update actions dropdown options.
-    $form['research_migration_actions']['#options'] = _bulk_list_research_migration_actions();
+    $form['research_migration_actions']['#options'] = $this->_bulk_list_research_migration_actions();
     $renderer = \Drupal::service('renderer');
     $response->addCommand(new ReplaceCommand('#ajax_selected_research_migration_action', $renderer->render($form['research_migration_actions'])));
   } 

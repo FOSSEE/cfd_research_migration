@@ -31,7 +31,8 @@ class CfdResearchMigrationProposalStatusForm extends FormBase {
     // $proposal_id = (int) arg(3);
     $route_match = \Drupal::routeMatch();
 
-    $proposal_id = (int) $route_match->getParameter('proposal_id');
+    $proposal_id = (int) $route_match->getParameter('id');
+    // var_dump($proposal_id);die;
     $query = \Drupal::database()->select('research_migration_proposal');
     $query->fields('research_migration_proposal');
     $query->condition('id', $proposal_id);
@@ -60,6 +61,7 @@ class CfdResearchMigrationProposalStatusForm extends FormBase {
 // $response->send();
       return;
     }
+    // var_dump($proposal_data);die;
     if ($proposal_data->faculty_name == '') {
       $faculty_name = 'NA';
     }
@@ -112,7 +114,9 @@ class CfdResearchMigrationProposalStatusForm extends FormBase {
     $form['student_email_id'] = [
       '#title' => t('Student Email'),
       '#type' => 'item',
-      '#markup' => user_load($proposal_data->uid)->mail,
+      // '#markup' => User::load($proposal_data->uid)->mail,
+      '#markup' =>  $user->getEmail(),
+
       '#title' => t('Email'),
     ];
     $form['university'] = [
@@ -196,8 +200,12 @@ class CfdResearchMigrationProposalStatusForm extends FormBase {
       $form['abstract_file_path'] = [
         '#type' => 'item',
         '#title' => t('Synopsis file '),
-        '#markup' => l($resource_file, 'research-migration-project/download/project-file/' . $proposal_id) . "",
-      ];
+        // '#markup' => l($resource_file, 'research-migration-project/download/project-file/' . $proposal_id) . "",
+         '#markup' => Link::fromTextAndUrl($resource_file,Url::fromUserInput('/research-migration-project/download/project-file/' . $proposal_id)
+  )->toString(),
+];
+
+      
     } //$proposal_data->user_defined_compound_filepath != ""
     else {
       $form['abstract_file_path'] = [

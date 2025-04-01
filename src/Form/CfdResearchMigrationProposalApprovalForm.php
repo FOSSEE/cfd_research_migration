@@ -10,6 +10,16 @@ namespace Drupal\cfd_research_migration\Form;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Drupal\Core\Url;
+use Drupal\Core\Link;
+use Drupal\user\Entity\User;
+use Symfony\Component\HttpFoundation\Response;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Mail\MailManagerInterface;
+use Drupal\Core\DependencyInjection\ContainerInterface;
+use Drupal\Core\Session\AccountProxy;
 
 class CfdResearchMigrationProposalApprovalForm extends FormBase {
 
@@ -26,7 +36,7 @@ class CfdResearchMigrationProposalApprovalForm extends FormBase {
     // $proposal_id = (int) arg(3);
     $route_match = \Drupal::routeMatch();
 
-    $proposal_id = (int) $route_match->getParameter('proposal_id');
+    $proposal_id = (int) $route_match->getParameter('id');
     $query = \Drupal::database()->select('research_migration_proposal');
     $query->fields('research_migration_proposal');
     $query->condition('id', $proposal_id);
@@ -38,17 +48,22 @@ class CfdResearchMigrationProposalApprovalForm extends FormBase {
     $query_abstract_pdf = $query_abstract->execute()->fetchObject();
     if ($proposal_q) {
       if ($proposal_data = $proposal_q->fetchObject()) {
-        /* everything ok */
+    //     /* everything ok */
       } //$proposal_data = $proposal_q->fetchObject()
       else {
         \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
-        // drupal_goto('research-migration-project/manage-proposal');
+        $url = Url::fromRoute('cfd_research_migration.proposal_approval_form')->toString();
+        \Drupal::service('request_stack')->getCurrentRequest()->query->set('destination', $url);
+    //     // drupal_goto('research-migration-project/manage-proposal');
         return;
       }
     } //$proposal_q
     else {
       \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
-      // drupal_goto('research-migration-project/manage-proposal');
+    //   // drupal_goto('research-migration-project/manage-proposal');
+    $url = Url::fromRoute('cfd_research_migration.proposal_approval_form')->toString();
+    \Drupal::service('request_stack')->getCurrentRequest()->query->set('destination', $url);
+
       return;
     }
     if ($proposal_data->faculty_name == '') {
@@ -94,6 +109,8 @@ class CfdResearchMigrationProposalApprovalForm extends FormBase {
       '#title' => t('Student Email'),
       '#type' => 'item',
       // '#markup' => user_load($proposal_data->uid)->mail,
+      '#markup' => $user->getEmail(),
+
       '#title' => t('Email'),
     ];
     $form['contributor_contact_no'] = [
@@ -179,31 +196,42 @@ class CfdResearchMigrationProposalApprovalForm extends FormBase {
       '#default_value' => date('d/m/Y', $proposal_data->expected_date_of_completion),
       '#disabled' => TRUE,
     ];
-    if (($query_abstract_pdf->filename != "") && ($query_abstract_pdf->filename != 'NULL')) {
-      $str = substr($query_abstract_pdf->filename, strrpos($query_abstract_pdf->filename, '/'));
-      $resource_file = ltrim($str, '/');
+    // if (($query_abstract_pdf->filename != "") && ($query_abstract_pdf->filename != 'NULL')) {
+      // $str = substr($query_abstract_pdf->filename, strrpos($query_abstract_pdf->filename, '/'));
+      // $resource_file = ltrim($str, '/');
 
-      $form['abstract_file_path'] = [
-        '#type' => 'item',
-        '#title' => t('Synopsis file '),
-        // '#markup' => l($resource_file, 'research-migration-project/download/project-file/' . $proposal_id) .
-        //  "",
-
-        '#markup' => Link::fromTextAndUrl(
-  $resource_file,
-  Url::fromUserInput('/research-migration-project/download/project-file/' . $proposal_id)
-)->toString(),
+//    
+  //  $form['abstract_file_path'] = [
+//         '#type' => 'item',
+//         '#title' => t('Synopsis file '),
+//         // '#markup' => l($resource_file, 'research-migration-project/download/project-file/' . $proposal_id) .
+//         //  "",
+// '#markup' => Link::fromTextAndUrl(
+//         $resource_file,
+//         Url::fromUri('internal:/research-migration-project/download/project-file/' . $proposal_data->id)
+//     )->toString(),
+       
 
      
-      ];
-    } //$proposal_data->user_defined_compound_filepath != ""
-    else {
-      $form['abstract_file_path'] = [
-        '#type' => 'item',
-        '#title' => t('Synopsis file '),
-        '#markup' => "Not uploaded<br><br>",
-      ];
-    }
+//       ];
+//     } //$proposal_data->user_defined_compound_filepath != ""
+//     else {
+//       $form['abstract_file_path'] = [
+//         '#type' => 'item',
+//         '#title' => t('Synopsis file '),
+//         // '#markup' => "Not uploaded<br><br>",
+//       ];
+
+$form['abstract_file_path'] = [
+  '#type' => 'item',
+  '#title' => t('Synopsis file'),
+  '#markup' => \Drupal\Core\Link::fromTextAndUrl(
+      $resource_file,
+      Url::fromUri('internal:/research-migration-project/download/project-file/' . $proposal_id, ['attributes' => ['target' => '_blank']])
+  )->toString(),
+];
+
+    // }
     $form['approval'] = [
       '#type' => 'radios',
       '#title' => t('CFD research migration proposal'),
@@ -236,8 +264,7 @@ class CfdResearchMigrationProposalApprovalForm extends FormBase {
     $form['cancel'] = [
       '#type' => 'item',
       // '#markup' => l(t('Cancel'), 'research-migration-project/manage-proposal'),
-      '#markup' => Link::fromTextAndUrl(
-  $this->t('Cancel'),
+      '#markup' => Link::fromTextAndUrl($this->t('Cancel'),
   Url::fromUserInput('/research-migration-project/manage-proposal/pending')
 )->toString(),
     ];
@@ -255,7 +282,10 @@ class CfdResearchMigrationProposalApprovalForm extends FormBase {
   public function submitForm(array &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
     $user = \Drupal::currentUser();
     /* get current proposal */
-    $proposal_id = (int) arg(3);
+    // $proposal_id = (int) arg(3);
+    $route_match = \Drupal::routeMatch();
+
+    $proposal_id = (int) $route_match->getParameter('id');
     $query = \Drupal::database()->select('research_migration_proposal');
     $query->fields('research_migration_proposal');
     $query->condition('id', $proposal_id);
@@ -266,13 +296,17 @@ class CfdResearchMigrationProposalApprovalForm extends FormBase {
       } //$proposal_data = $proposal_q->fetchObject()
       else {
         \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
-        drupal_goto('research-migration-project/manage-proposal');
+        // drupal_goto('research-migration-project/manage-proposal');
+        $url = Url::fromRoute('cfd_research_migration.proposal_pending')->toString();
+        \Drupal::service('request_stack')->getCurrentRequest()->query->set('destination', $url);
         return;
       }
     } //$proposal_q
     else {
       \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
-      drupal_goto('research-migration-project/manage-proposal');
+      // drupal_goto('research-migration-project/manage-proposal');
+      $url = Url::fromRoute('cfd_research_migration.proposal_pending')->toString();
+        \Drupal::service('request_stack')->getCurrentRequest()->query->set('destination', $url);
       return;
     }
     if ($form_state->getValue(['approval']) == 1) {
@@ -284,28 +318,30 @@ class CfdResearchMigrationProposalApprovalForm extends FormBase {
       ];
       \Drupal::database()->query($query, $args);
       /* sending email */
-      $user_data = user_load($proposal_data->uid);
-      $email_to = $user_data->mail;
-      $from = variable_get('research_migration_from_email', '');
-      $bcc = $user->mail . ', ' . variable_get('research_migration_emails', '');
-      $cc = variable_get('research_migration_cc_emails', '');
-      $params['research_migration_proposal_approved']['proposal_id'] = $proposal_id;
-      $params['research_migration_proposal_approved']['user_id'] = $proposal_data->uid;
-      $params['research_migration_proposal_approved']['headers'] = [
-        'From' => $from,
-        'MIME-Version' => '1.0',
-        'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
-        'Content-Transfer-Encoding' => '8Bit',
-        'X-Mailer' => 'Drupal',
-        'Cc' => $cc,
-        'Bcc' => $bcc,
-      ];
-      if (!drupal_mail('research_migration', 'research_migration_proposal_approved', $email_to, language_default(), $params, $from, TRUE)) {
-        \Drupal::messenger()->addMessage('Error sending email message.', 'error');
-      }
+      // $user_data = user_load($proposal_data->uid);
+      // $email_to = $user_data->mail;
+      // $from = variable_get('research_migration_from_email', '');
+      // $bcc = $user->mail . ', ' . variable_get('research_migration_emails', '');
+      // $cc = variable_get('research_migration_cc_emails', '');
+      // $params['research_migration_proposal_approved']['proposal_id'] = $proposal_id;
+      // $params['research_migration_proposal_approved']['user_id'] = $proposal_data->uid;
+      // $params['research_migration_proposal_approved']['headers'] = [
+      //   'From' => $from,
+      //   'MIME-Version' => '1.0',
+      //   'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
+      //   'Content-Transfer-Encoding' => '8Bit',
+      //   'X-Mailer' => 'Drupal',
+      //   'Cc' => $cc,
+      //   'Bcc' => $bcc,
+      // ];
+      // if (!drupal_mail('research_migration', 'research_migration_proposal_approved', $email_to, language_default(), $params, $from, TRUE)) {
+      //   \Drupal::messenger()->addMessage('Error sending email message.', 'error');
+      // }
 
       \Drupal::messenger()->addMessage('CFD research migration proposal No. ' . $proposal_id . ' approved. User has been notified of the approval.', 'status');
-      drupal_goto('research-migration-project/manage-proposal');
+      // drupal_goto('research-migration-project/manage-proposal');
+      $url = Url::fromRoute('cfd_research_migration.proposal_pending')->toString();
+        \Drupal::service('request_stack')->getCurrentRequest()->query->set('destination', $url);
       return;
     } //$form_state['values']['approval'] == 1
     else {
@@ -319,28 +355,30 @@ class CfdResearchMigrationProposalApprovalForm extends FormBase {
         ];
         $result = \Drupal::database()->query($query, $args);
         /* sending email */
-        $user_data = user_load($proposal_data->uid);
-        $email_to = $user_data->mail;
-        $from = variable_get('research_migration_from_email', '');
-        $bcc = $user->mail . ', ' . variable_get('research_migration_emails', '');
-        $cc = variable_get('research_migration_cc_emails', '');
-        $params['research_migration_proposal_disapproved']['proposal_id'] = $proposal_id;
-        $params['research_migration_proposal_disapproved']['user_id'] = $proposal_data->uid;
-        $params['research_migration_proposal_disapproved']['headers'] = [
-          'From' => $from,
-          'MIME-Version' => '1.0',
-          'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
-          'Content-Transfer-Encoding' => '8Bit',
-          'X-Mailer' => 'Drupal',
-          'Cc' => $cc,
-          'Bcc' => $bcc,
-        ];
-        if (!drupal_mail('research_migration', 'research_migration_proposal_disapproved', $email_to, language_default(), $params, $from, TRUE)) {
-          \Drupal::messenger()->addMessage('Error sending email message.', 'error');
-        }
+        // $user_data = user_load($proposal_data->uid);
+        // $email_to = $user_data->mail;
+        // $from = variable_get('research_migration_from_email', '');
+        // $bcc = $user->mail . ', ' . variable_get('research_migration_emails', '');
+        // $cc = variable_get('research_migration_cc_emails', '');
+        // $params['research_migration_proposal_disapproved']['proposal_id'] = $proposal_id;
+        // $params['research_migration_proposal_disapproved']['user_id'] = $proposal_data->uid;
+        // $params['research_migration_proposal_disapproved']['headers'] = [
+        //   'From' => $from,
+        //   'MIME-Version' => '1.0',
+        //   'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
+        //   'Content-Transfer-Encoding' => '8Bit',
+        //   'X-Mailer' => 'Drupal',
+        //   'Cc' => $cc,
+        //   'Bcc' => $bcc,
+        // ];
+        // if (!drupal_mail('research_migration', 'research_migration_proposal_disapproved', $email_to, language_default(), $params, $from, TRUE)) {
+        //   \Drupal::messenger()->addMessage('Error sending email message.', 'error');
+        // }
 
         \Drupal::messenger()->addMessage('CFD research migration proposal No. ' . $proposal_id . ' dis-approved. User has been notified of the dis-approval.', 'error');
-        drupal_goto('research-migration-project/manage-proposal');
+        // drupal_goto('research-migration-project/manage-proposal');
+        $url = Url::fromRoute('cfd_research_migration.proposal_pending')->toString();
+        \Drupal::service('request_stack')->getCurrentRequest()->query->set('destination', $url);
         return;
       }
     } //$form_state['values']['approval'] == 2

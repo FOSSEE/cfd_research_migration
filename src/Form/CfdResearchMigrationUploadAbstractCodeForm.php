@@ -10,6 +10,19 @@ namespace Drupal\cfd_research_migration\Form;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Element;
+use Drupal\Core\Link;
+use Drupal\Core\Url;
+use Drupal\Core\Routing\TrustedRedirectResponse;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\Database\Database;
+use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\Mail\MailManager;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+// use Drupal\Component\Render\Markup;
+use Drupal\Core\Render\Markup; 
 
 class CfdResearchMigrationUploadAbstractCodeForm extends FormBase {
 
@@ -36,14 +49,18 @@ class CfdResearchMigrationUploadAbstractCodeForm extends FormBase {
         /* everything ok */
       } //$proposal_data = $proposal_q->fetchObject()
       else {
-        drupal_set_message(t('Invalid proposal selected. Please try again.'), 'error');
-        drupal_goto('research-migration-project/abstract-code');
+        \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
+        // drupal_goto('research-migration-project/abstract-code');
+        $response = new RedirectResponse(Url::fromUri('internal:/research-migration-project/abstract-code')->toString());
+$response->send();
         return;
       }
     } //$proposal_q
     else {
-      drupal_set_message(t('Invalid proposal selected. Please try again.'), 'error');
-      drupal_goto('research-migration-project/abstract-code');
+      \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
+      // drupal_goto('research-migration-project/abstract-code');
+      $response = new RedirectResponse(Url::fromUri('internal:/research-migration-project/abstract-code')->toString());
+$response->send();
       return;
     }
     $query = \Drupal::database()->select('research_migration_submitted_abstracts');
@@ -52,8 +69,10 @@ class CfdResearchMigrationUploadAbstractCodeForm extends FormBase {
     $abstracts_q = $query->execute()->fetchObject();
     if ($abstracts_q) {
       if ($abstracts_q->is_submitted == 1) {
-        drupal_set_message(t('You have already submited your Case Directory, hence you can not upload any more, for any query please write to us.'), 'error', $repeat = FALSE);
-        drupal_goto('research-migration-project/abstract-code');
+        \Drupal::messenger()->addMessage(t('You have already submited your Case Directory, hence you can not upload any more, for any query please write to us.'), 'error', $repeat = FALSE);
+        // drupal_goto('research-migration-project/abstract-code');
+        $response = new RedirectResponse(Url::fromUri('internal:/research-migration-project/abstract-code')->toString());
+$response->send();
         //return;
       } //$abstracts_q->is_submitted == 1
     } //$abstracts_q->is_submitted == 1
@@ -67,16 +86,16 @@ class CfdResearchMigrationUploadAbstractCodeForm extends FormBase {
       '#markup' => $proposal_data->contributor_name,
       '#title' => t('Contributor Name'),
     ];
-    $existing_uploaded_S_file = default_value_for_uploaded_files("S", $proposal_data->id);
+    $existing_uploaded_S_file =  \Drupal::service("cfd_research_migration_global")->default_value_for_uploaded_files("S", $proposal_data->id);
     if (!$existing_uploaded_S_file) {
-      $existing_uploaded_S_file = new stdClass();
+      $existing_uploaded_S_file = new \stdClass();
       $existing_uploaded_S_file->filename = "No file uploaded";
     } //!$existing_uploaded_S_file
     $form['upload_research_migration_developed_process'] = [
       '#type' => 'file',
       '#title' => t('Upload the Case Directory'),
       //'#required' => TRUE,
-        '#description' => t('<span style="color:red;">Current File :</span> ' . $existing_uploaded_S_file->filename . '<br />Separate filenames with underscore. No spaces or any special characters allowed in filename.') . '<br />' . t('<span style="color:red;">Allowed file extensions : ') . variable_get('research_migration_project_files_extensions', '') . '</span>',
+        '#description' => t('<span style="color:red;">Current File :</span> ' . $existing_uploaded_S_file->filename . '<br />Separate filenames with underscore. No spaces or any special characters allowed in filename.') . '<br />' . t('<span style="color:red;">Allowed file extensions : ') . \Drupal::config('cfd_research_migration.settings')->get('research_migration_project_files_extensions', '') . '</span>',
     ];
     $form['prop_id'] = [
       '#type' => 'hidden',
@@ -91,7 +110,12 @@ class CfdResearchMigrationUploadAbstractCodeForm extends FormBase {
     ];
     $form['cancel'] = [
       '#type' => 'item',
-      '#markup' => l(t('Cancel'), 'research-migration-project/abstract-code'),
+      // '#markup' => l(t('Cancel'), 'research-migration-project/abstract-code'),
+'#markup' => Link::fromTextAndUrl(
+    t('Cancel'), 
+    Url::fromUserInput('/research-migration-project/abstract-code')
+)->toString(),
+
     ];
     return $form;
   }
@@ -108,7 +132,7 @@ class CfdResearchMigrationUploadAbstractCodeForm extends FormBase {
       foreach ($_FILES['files']['name'] as $file_form_name => $file_name) {
         if ($file_name) {
           /* checking file type */
-          $allowed_extensions_str = variable_get('research_migration_project_files_extensions', '');
+          $allowed_extensions_str = \Drupal::config('cfd_research_migration.settings')->get('research_migration_project_files_extensions', '');
           $allowed_extensions = explode(',', $allowed_extensions_str);
           $fnames = explode('.', strtolower($_FILES['files']['name'][$file_form_name]));
           $temp_extension = end($fnames);
@@ -134,11 +158,11 @@ class CfdResearchMigrationUploadAbstractCodeForm extends FormBase {
   public function submitForm(array &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
     $user = \Drupal::currentUser();
     $v = $form_state->getValues();
-    $root_path = cfd_research_migration_path();
-    $proposal_data = cfd_research_migration_get_proposal();
+    $root_path = \Drupal::service("cfd_research_migration_global")->cfd_research_migration_path();
+    $proposal_data = \Drupal::service("cfd_research_migration_global")->cfd_research_migration_get_proposal();
     $proposal_id = $proposal_data->id;
     if (!$proposal_data) {
-      drupal_goto('');
+      // drupal_goto('');
       return;
     } //!$proposal_data
     $proposal_id = $proposal_data->id;
@@ -176,7 +200,7 @@ class CfdResearchMigrationUploadAbstractCodeForm extends FormBase {
         ":id" => $proposal_id,
       ];
       \Drupal::database()->query($query1, $args1);
-      drupal_set_message('Synopsis Submission uploaded successfully.', 'status');
+      \Drupal::messenger()->addMessage('Synopsis Submission uploaded successfully.', 'status');
     } //!$query_s_result
     else {
       $query = "UPDATE {research_migration_submitted_abstracts} SET
@@ -200,7 +224,7 @@ class CfdResearchMigrationUploadAbstractCodeForm extends FormBase {
         ":id" => $proposal_id,
       ];
       \Drupal::database()->query($query1, $args1);
-      drupal_set_message('Synopsis Submission updated successfully.', 'status');
+      \Drupal::messenger()->addMessage('Synopsis Submission updated successfully.', 'status');
     }
     foreach ($_FILES['files']['name'] as $file_form_name => $file_name) {
       if ($file_name) {
@@ -213,7 +237,7 @@ class CfdResearchMigrationUploadAbstractCodeForm extends FormBase {
 
             if (file_exists($root_path . $dest_path_project_files . $_FILES['files']['name'][$file_form_name])) {
               //unlink($root_path . $dest_path . $_FILES['files']['name'][$file_form_name]);
-              drupal_set_message(t("File !filename already exists hence overwirtten the exisitng file ", [
+              \Drupal::messenger()->addMessage(t("File !filename already exists hence overwirtten the exisitng file ", [
                 '!filename' => $_FILES['files']['name'][$file_form_name]
                 ]), 'error');
             } //file_exists($root_path . $dest_path . $_FILES['files']['name'][$file_form_name])
@@ -250,7 +274,7 @@ class CfdResearchMigrationUploadAbstractCodeForm extends FormBase {
                   \Drupal::database()->query($query, $args, [
                     'return' => Database::RETURN_INSERT_ID
                     ]);
-                  drupal_set_message($file_name . ' uploaded successfully.', 'status');
+                  \Drupal::messenger()->addMessage($file_name . ' uploaded successfully.', 'status');
                 } //!$query_ab_f_result
                 else {
                   unlink($root_path . $dest_path_project_files . $query_ab_f_result->filename);
@@ -268,11 +292,11 @@ class CfdResearchMigrationUploadAbstractCodeForm extends FormBase {
                     'return' => Database::RETURN_INSERT_ID
                     ]);
 
-                  drupal_set_message($file_name . ' file updated successfully.', 'status');
+                  \Drupal::messenger()->addMessage($file_name . ' file updated successfully.', 'status');
                 }
               } //move_uploaded_file($_FILES['files']['tmp_name'][$file_form_name], $root_path . $dest_path . $_FILES['files']['name'][$file_form_name])
               else {
-                drupal_set_message('Error uploading file : ' . $dest_path_project_files . $file_name, 'error');
+                \Drupal::messenger()->addMessage('Error uploading file : ' . $dest_path_project_files . $file_name, 'error');
               }
             }
             break;
@@ -280,27 +304,30 @@ class CfdResearchMigrationUploadAbstractCodeForm extends FormBase {
       } //$file_name
     } //$_FILES['files']['name'] as $file_form_name => $file_name
     /* sending email */
-    $email_to = $user->mail;
-    $from = variable_get('research_migration_from_email', '');
-    $bcc = variable_get('research_migration_emails', '');
-    $cc = variable_get('research_migration_cc_emails', '');
-    $params['abstract_uploaded']['proposal_id'] = $proposal_id;
-    $params['abstract_uploaded']['submitted_abstract_id'] = $submitted_abstract_id;
-    $params['abstract_uploaded']['user_id'] = $user->uid;
-    $params['abstract_uploaded']['headers'] = [
-      'From' => $from,
-      'MIME-Version' => '1.0',
-      'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
-      'Content-Transfer-Encoding' => '8Bit',
-      'X-Mailer' => 'Drupal',
-      'Cc' => $cc,
-      'Bcc' => $bcc,
-    ];
-    if (!drupal_mail('research_migration', 'abstract_uploaded', $email_to, language_default(), $params, $from, TRUE)) {
-      drupal_set_message('Error sending email message.', 'error');
-    }
+    // $email_to = $user->mail;
+    // $from = variable_get('research_migration_from_email', '');
+    // $bcc = variable_get('research_migration_emails', '');
+    // $cc = variable_get('research_migration_cc_emails', '');
+    // $params['abstract_uploaded']['proposal_id'] = $proposal_id;
+    // $params['abstract_uploaded']['submitted_abstract_id'] = $submitted_abstract_id;
+    // $params['abstract_uploaded']['user_id'] = $user->uid;
+    // $params['abstract_uploaded']['headers'] = [
+    //   'From' => $from,
+    //   'MIME-Version' => '1.0',
+    //   'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
+    //   'Content-Transfer-Encoding' => '8Bit',
+    //   'X-Mailer' => 'Drupal',
+    //   'Cc' => $cc,
+    //   'Bcc' => $bcc,
+    // ];
+    // if (!drupal_mail('research_migration', 'abstract_uploaded', $email_to, language_default(), $params, $from, TRUE)) {
+    //   \Drupal::messenger()->addMessage('Error sending email message.', 'error');
+    // }
 
-    drupal_goto('research-migration-project/abstract-code');
+    // drupal_goto('research-migration-project/abstract-code');
+    $response = new RedirectResponse(Url::fromUri('internal:/research-migration-project/abstract-code')->toString());
+$response->send();
+
   }
 
 }

@@ -138,6 +138,95 @@ function _df_sentence_case($string)
     } //array( '-', '\'') as $delimiter
     return $string;
 }
+// function cfd_research_migration_get_proposal()
+// {
+//     // $user = \Drupal::currentUser();
+//     global $user;
+//     $user = \Drupal\user\Entity\User::load(\Drupal::currentUser()->id());
+//     $query = \Drupal::database()->select('research_migration_proposal');
+//     $query->fields('research_migration_proposal');
+//     $query->condition('uid', $user->uid);
+//     $query->orderBy('id', 'DESC');
+//     $query->range(0, 1);
+//     $proposal_q = $query->execute();
+//     $proposal_data = $proposal_q->fetchObject();
+//     // if (!$proposal_data) {
+//     //     \Drupal::messenger()->addError("You do not have any approved  Research Migration proposal. Please propose a Research Migration");
+//     //     // drupal_goto('');
+//     // } //!$proposal_data
+//     switch ($proposal_data->approval_status) {
+//         case 0:
+//             \Drupal::messenger()->addStatus(t('Proposal is awaiting approval.'));
+//             return false;
+//         case 1:
+//             return $proposal_data;
+//         case 2:
+//             \Drupal::messenger()->addError(t('Proposal has been dis-approved.'));
+//             return false;
+//         case 3:
+//             \Drupal::messenger()->addStatus(t('Proposal has been marked as completed.'));
+//             return false;
+//         default:
+//             \Drupal::messenger()->addError(t('Invalid proposal state. Please contact site administrator for further information.'));
+//             return false;
+//     } //$proposal_data->approval_status
+//     // return false;
+// }
+
+
+public function cfd_research_migration_get_proposal() {
+    $user = \Drupal::currentUser();
+    
+    // Fetch latest proposal for current user
+    $query = \Drupal::database()->select('research_migration_proposal', 'rmp');
+    $query->fields('rmp');
+    $query->condition('uid', $user->id());
+    $query->orderBy('id', 'DESC');
+    $query->range(0, 1);
+    $proposal_q = $query->execute();
+    $proposal_data = $proposal_q->fetchObject();
+
+    // Debugging log
+    \Drupal::logger('research_migration')->notice('Proposal Data: <pre>' . print_r($proposal_data, TRUE) . '</pre>');
+
+    if (!$proposal_data) {
+        \Drupal::messenger()->addError("No proposal found for this user.");
+        return NULL;
+    }
+
+    // Check approval status
+    switch ($proposal_data->approval_status) {
+        case 0:
+            \Drupal::messenger()->addWarning(t('Proposal is awaiting approval.'));
+            break;
+        case 1:
+            return $proposal_data;  // ✅ Approved proposal
+        case 2:
+            \Drupal::messenger()->addError(t('Proposal has been disapproved.'));
+            break;
+        case 3:
+            \Drupal::messenger()->addStatus(t('Proposal has been marked as completed.'));
+            break;
+        default:
+            \Drupal::messenger()->addError(t('Invalid proposal state. Contact the administrator.'));
+    }
+    return $proposal_data;  // ✅ Return proposal even if not approved
+}
+
+
+function default_value_for_uploaded_files($filetype, $proposal_id)
+{
+    $database = Database::getConnection();
+    $query = $database->select('research_migration_submitted_abstracts_file', 'rmsaf')
+        ->fields('rmsaf')
+        ->condition('proposal_id', $proposal_id)
+        ->condition('filetype', $filetype)
+        ->execute()
+        ->fetchObject();
+
+    return $query ?: null; // Return null if no result found
+}
+
 
 }
  

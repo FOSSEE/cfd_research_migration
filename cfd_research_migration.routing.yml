@@ -20,7 +20,7 @@ cfd_research_migration.view_lecture_videos:
   requirements:
     _permission: 'view lecture videos'
 cfd_research_migration.edit_lecture_videos_form:
-  path: /lecture-videos/edit/{id?}
+  path: /lecture-videos/edit/{video_id?}
   defaults:
     _title: 'Edit Lecture Videos'
     _form: \Drupal\cfd_research_migration\Form\EditLectureVideosForm
@@ -165,7 +165,7 @@ cfd_research_migration.download_research_migration_project_title_files:
   requirements:
     _permission: 'download code'
 cfd_research_migration.project_files:
-  path: /research-migration-project/download/project-file
+  path: /research-migration-project/download/project-file/{id?}
   defaults:
     _title: 'Download Project file'
     _controller: '\Drupal\cfd_research_migration\Controller\DefaultController::cfd_research_migration_project_files'
