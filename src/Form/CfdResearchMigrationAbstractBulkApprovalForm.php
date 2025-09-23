@@ -23,6 +23,7 @@ use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Render\Renderer;
+
 class CfdResearchMigrationAbstractBulkApprovalForm extends FormBase {
 
   /**
@@ -86,13 +87,7 @@ class CfdResearchMigrationAbstractBulkApprovalForm extends FormBase {
     $form['submit'] = [
       '#type' => 'submit',
       '#value' => t('Submit'),
-      '#states' => [
-        'invisible' => [
-          ':input[name="lab"]' => [
-            'value' => 0
-            ]
-          ]
-        ],
+      
     ];
     return $form;
   }
@@ -132,9 +127,9 @@ function ajax_bulk_research_migration_abstract_details_callback(array &$form, Fo
     // Use Drupal's Database API to query the research_migration_proposal table.
     $query = \Drupal::database()->select('research_migration_proposal', 'r');
     $query->fields('r', ['id', 'project_title', 'contributor_name']);
-    $query->condition('r.is_submitted', 1);
-    $query->condition('r.approval_status', 1);
-    $query->orderBy('r.project_title', 'ASC');
+    $query->condition('is_submitted', 1);
+    $query->condition('approval_status', 1);
+    $query->orderBy('project_title', 'ASC');
   
     $project_titles_q = $query->execute();
     

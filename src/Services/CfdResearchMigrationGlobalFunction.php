@@ -227,6 +227,67 @@ function default_value_for_uploaded_files($filetype, $proposal_id)
     return $query ?: null; // Return null if no result found
 }
 
+// function _rm_list_of_research_migration() {
+//   $existing_research_migration = [];
 
+//   $query = "
+//     SELECT rm_project_title_name 
+//     FROM rm_list_of_project_titles 
+//     WHERE rm_project_title_name NOT IN (
+//       SELECT project_title 
+//       FROM research_migration_proposal 
+//       WHERE approval_status IN (:status_0, :status_1, :status_3)
+//     )
+//   ";
+
+//   $connection = Database::getConnection();
+//   $result = $connection->query($query, [
+//     ':status_0' => 0,
+//     ':status_1' => 1,
+//     ':status_3' => 3,
+//   ]);
+
+//   foreach ($result as $record) {
+//     $existing_research_migration[$record->rm_project_title_name] = $record->rm_project_title_name;
+//   }
+
+//   return $existing_research_migration;
+// }
+
+private function _rm_list_of_research_migration() {
+    $existing_research_migration = [];
+
+    $query = "
+      SELECT rm_project_title_name 
+      FROM rm_list_of_project_titles 
+      WHERE rm_project_title_name NOT IN (
+        SELECT project_title 
+        FROM research_migration_proposal 
+        WHERE approval_status IN (:status_0, :status_1, :status_3)
+      )
+    ";
+
+    $connection = Database::getConnection();
+    $result = $connection->query($query, [
+      ':status_0' => 0,
+      ':status_1' => 1,
+      ':status_3' => 3,
+    ]);
+
+    foreach ($result as $record) {
+      $existing_research_migration[$record->rm_project_title_name] = $record->rm_project_title_name;
+    }
+
+    return $existing_research_migration;
+  }
+
+  /**
+   * Disable caching so form updates every time.
+   */
+  public function getCacheMaxAge() {
+    return 0;
+  }
 }
+
+
  

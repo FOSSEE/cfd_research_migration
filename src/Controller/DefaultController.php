@@ -52,9 +52,10 @@ class DefaultController extends ControllerBase {
         date('d-m-Y', $result->creation_date),
         // l('Edit details', 'lecture-videos/edit/' . $result->video_sno),
         
-       Link::fromTextAndUrl(
-          $this->t('Edit details'),Url::fromUserInput('/lecture-videos/edit/' . $result->video_sno)
-        )->toString(),
+Link::fromTextAndUrl(
+  $this->t('Edit details'),
+  Url::fromRoute('cfd_research_migration.edit_lecture_videos_form', ['video_id' => $result->id])
+)->toString(),
         
       ];
     }
@@ -105,25 +106,48 @@ class DefaultController extends ControllerBase {
       ->orderBy('video_sno', 'ASC')
       ->execute();
 
-    foreach ($query as $result) {
-      $video_markup = [
-        '#type' => 'markup',
-        '#markup' => '<div class="container-testimonial">'
-          . '<h3><strong>' . $this->t($result->video_title) . '</strong></h3>'
-          . '<video title="" controls preload="auto" width="500" height="250">'
-          . '<source src="' . $result->video_link . '" type="video/mp4">'
-          . '</video>'
-          . '<span>' . $this->t($result->video_description_text) . '</span>'
-          . '<h4>' . $this->t('Click @link to view the script file.', [
-            '@link' => Link::fromTextAndUrl(
-              $this->t('here'),
-              Url::fromUri($result->script_file_link, ['attributes' => ['target' => '_blank']])
-            )->toString(),
-          ]) . '</h4></div>',
-      ];
+    // foreach ($query as $result) {
+    //   $video_markup = [
+    //     '#type' => 'markup',
+    //     '#markup' => '<div class="container-testimonial">'
+    //       . '<h3><strong>' . $this->t($result->video_title) . '</strong></h3>'
+    //       . '<video title="" controls preload="auto" width="500" height="250">'
+    //       . '<source src="' . $result->video_link . '" type="video/mp4">'
+    //       . '</video>'
+    //       . '<span>' . $this->t($result->video_description_text) . '</span>'
+    //       . '<h4>' . $this->t('Click @link to view the script file.', [
+    //         '@link' => Link::fromTextAndUrl(
+    //           $this->t('here'),
+    //           Url::fromUri($result->script_file_link, ['attributes' => ['target' => '_blank']])
+    //         )->toString(),
+    //       ]) . '</h4></div>',
+    //   ];
 
-      $page_content['#items'][] = $video_markup;
-    }
+    //   $page_content['#items'][] = $video_markup;
+    // }
+
+    foreach ($query as $result) {
+  $video_markup = [
+    '#markup' => Markup::create(
+      '<div class="container-testimonial">'
+        . '<h3><strong>' . $result->video_title . '</strong></h3>'
+        . '<video title="" controls preload="auto" width="500" height="250">'
+        . '<source src="' . $result->video_link . '" type="video/mp4">'
+        . '</video>'
+        . '<span>' . $result->video_description_text . '</span>'
+        . '<h4>Click '
+        . Link::fromTextAndUrl(
+            $this->t('here'),
+            Url::fromUri($result->script_file_link, ['attributes' => ['target' => '_blank']])
+          )->toString()
+        . ' to view the script file.</h4>'
+        . '</div>'
+    ),
+  ];
+
+  $page_content['#items'][] = $video_markup;
+}
+
 
     return $page_content;
   }
@@ -587,7 +611,7 @@ public function cfd_research_migration_abstract() {
           '#markup' => '<p style="color: red;">Error: No proposal data found.</p>',
       ];
   }
-
+// var_dump($proposal_data);die;
   // Debug: Check if properties exist
   if (!isset($proposal_data->name_title) || !isset($proposal_data->contributor_name)) {
       return [
@@ -595,7 +619,7 @@ public function cfd_research_migration_abstract() {
           '#markup' => '<p style="color: red;">Error: Contributor name or title is missing from proposal data.</p>',
       ];
   }
-
+// var_dump($proposal_data->contributor_name);die;
   // Fetch submitted abstracts
   $database = \Drupal::database();
   $abstracts_q = $database->select('research_migration_submitted_abstracts', 'rsa')
@@ -603,13 +627,13 @@ public function cfd_research_migration_abstract() {
       ->condition('proposal_id', $proposal_data->id)
       ->execute()
       ->fetchObject();
-
+// var_dump($abstract_q);die;==it give NULL value
   $abstracts_pro = $database->select('research_migration_proposal', 'rmp')
       ->fields('rmp')
       ->condition('id', $proposal_data->id)
       ->execute()
       ->fetchObject();
-
+// var_dump($abstract_pro);die;
   // Fetch synopsis submission file
   $abstracts_pdf = $database->select('research_migration_submitted_abstracts_file', 'rsaf')
       ->fields('rsaf')
@@ -617,7 +641,7 @@ public function cfd_research_migration_abstract() {
       ->condition('filetype', 'A')
       ->execute()
       ->fetchObject();
-
+// var_dump($abstract_pdf);die;
   $abstract_filename = ($abstracts_pdf && !empty($abstracts_pdf->filename))
       ? $abstracts_pdf->filename
       : "File not uploaded";
@@ -656,6 +680,8 @@ public function cfd_research_migration_abstract() {
   return [
     '#type' => 'markup',
     '#markup' => $return_html,
+    '#allowed_tags' => ['br', 'strong', 'a'], // Security: Whitelist allowed HTML tags
+
   ];
 }
 

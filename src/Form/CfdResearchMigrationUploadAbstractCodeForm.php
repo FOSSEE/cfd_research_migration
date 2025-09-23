@@ -38,31 +38,52 @@ class CfdResearchMigrationUploadAbstractCodeForm extends FormBase {
     $form['#attributes'] = ['enctype' => "multipart/form-data"];
     /* get current proposal */
     //$proposal_id = (int) arg(3);
+    $route_match = \Drupal::routeMatch();
+
+    $proposal_id = (int) $route_match->getParameter('id');
+    
     $uid = $user->uid;
-    $query = \Drupal::database()->select('research_migration_proposal');
-    $query->fields('research_migration_proposal');
-    $query->condition('uid', $uid);
-    $query->condition('approval_status', '1');
-    $proposal_q = $query->execute();
-    if ($proposal_q) {
-      if ($proposal_data = $proposal_q->fetchObject()) {
-        /* everything ok */
-      } //$proposal_data = $proposal_q->fetchObject()
-      else {
-        \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
-        // drupal_goto('research-migration-project/abstract-code');
-        $response = new RedirectResponse(Url::fromUri('internal:/research-migration-project/abstract-code')->toString());
-$response->send();
-        return;
-      }
-    } //$proposal_q
-    else {
-      \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
-      // drupal_goto('research-migration-project/abstract-code');
-      $response = new RedirectResponse(Url::fromUri('internal:/research-migration-project/abstract-code')->toString());
-$response->send();
-      return;
-    }
+//     $query = \Drupal::database()->select('research_migration_proposal');
+//     $query->fields('research_migration_proposal');
+//     $query->condition('uid', $uid);
+//     $query->condition('approval_status', '1');
+//     $proposal_q = $query->execute();
+
+$uid = $user->id();
+$query = \Drupal::database()->select('research_migration_proposal', 'rmp')
+    ->fields('rmp', ['id', 'project_title', 'contributor_name'])
+    ->condition('uid', $uid)
+    ->condition('approval_status', 1)
+    ->execute()
+    ->fetchObject();
+
+if (!$query) {
+    \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
+    return new RedirectResponse(Url::fromUri('internal:/research-migration-project/abstract-code')->toString());
+}
+
+// Store in $proposal_data
+$proposal_data = $query;
+
+// //     if ($proposal_q) {
+//       if ($proposal_data = $proposal_q->fetchObject()) {
+//         /* everything ok */
+//       } //$proposal_data = $proposal_q->fetchObject()
+//       else {
+//         \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
+//         // drupal_goto('research-migration-project/abstract-code');
+//         $response = new RedirectResponse(Url::fromUri('internal:/research-migration-project/abstract-code')->toString());
+// $response->send();
+//         return;
+//       }
+//     } //$proposal_q
+//     else {
+//       \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
+//       // drupal_goto('research-migration-project/abstract-code');
+//       $response = new RedirectResponse(Url::fromUri('internal:/research-migration-project/abstract-code')->toString());
+// $response->send();
+//       return;
+//     }
     $query = \Drupal::database()->select('research_migration_submitted_abstracts');
     $query->fields('research_migration_submitted_abstracts');
     $query->condition('proposal_id', $proposal_data->id);
@@ -71,21 +92,34 @@ $response->send();
       if ($abstracts_q->is_submitted == 1) {
         \Drupal::messenger()->addMessage(t('You have already submited your Case Directory, hence you can not upload any more, for any query please write to us.'), 'error', $repeat = FALSE);
         // drupal_goto('research-migration-project/abstract-code');
-        $response = new RedirectResponse(Url::fromUri('internal:/research-migration-project/abstract-code')->toString());
-$response->send();
+        // $response = new RedirectResponse(Url::fromUri('internal:/research-migration-project/abstract-code')->toString());
+// $response->send();
         //return;
       } //$abstracts_q->is_submitted == 1
     } //$abstracts_q->is_submitted == 1
+    // $form['project_title'] = [
+    //   '#type' => 'item',
+    //   '#markup' => $proposal_data->project_title,
+    //   '#title' => t('Title of the Research Migration Project'),
+    // ];
+    // $form['contributor_name'] = [
+    //   '#type' => 'item',
+    //   '#markup' => $proposal_data->contributor_name,
+    //   '#title' => t('Contributor Name'),
+    // ];
+
     $form['project_title'] = [
       '#type' => 'item',
-      '#markup' => $proposal_data->project_title,
-      '#title' => t('Title of the Research Migration Project'),
-    ];
-    $form['contributor_name'] = [
+      '#markup' => Markup::create($proposal_data->project_title),
+      '#title' => $this->t('Title of the Research Migration Project'),
+  ];
+  
+  $form['contributor_name'] = [
       '#type' => 'item',
-      '#markup' => $proposal_data->contributor_name,
-      '#title' => t('Contributor Name'),
-    ];
+      '#markup' => Markup::create($proposal_data->contributor_name),
+      '#title' => $this->t('Contributor Name'),
+  ];
+  
     $existing_uploaded_S_file =  \Drupal::service("cfd_research_migration_global")->default_value_for_uploaded_files("S", $proposal_data->id);
     if (!$existing_uploaded_S_file) {
       $existing_uploaded_S_file = new \stdClass();
@@ -105,7 +139,7 @@ $response->send();
       '#type' => 'submit',
       '#value' => t('Submit'),
       '#submit' => [
-        'cfd_research_migration_upload_abstract_code_form_submit'
+        '::submitForm'
         ],
     ];
     $form['cancel'] = [

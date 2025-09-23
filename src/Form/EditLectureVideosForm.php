@@ -1,17 +1,15 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\cfd_research_migration\Form\EditLectureVideosForm.
- */
-
 namespace Drupal\cfd_research_migration\Form;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Database\Database;
-use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\Url;
 
+/**
+ * Form for editing lecture videos.
+ */
 class EditLectureVideosForm extends FormBase {
 
   /**
@@ -26,17 +24,15 @@ class EditLectureVideosForm extends FormBase {
    */
   protected function getLectureVideoData($video_id) {
     $connection = Database::getConnection();
-    $query = $connection->select('lecture_videos', 'lv')
+    return $connection->select('lecture_videos', 'lv')
       ->fields('lv')
       ->condition('id', $video_id)
       ->execute()
       ->fetchObject();
-
-    return $query ?: NULL; // Return NULL if no data is found.
   }
 
   /**
-   * Build the form.
+   * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $route_match = \Drupal::routeMatch();
@@ -49,6 +45,12 @@ class EditLectureVideosForm extends FormBase {
       $this->messenger()->addError($this->t('Lecture video not found.'));
       return $form;
     }
+
+    // Store video_id in hidden field so we don’t lose it after submit.
+    $form['video_id'] = [
+      '#type' => 'hidden',
+      '#value' => $video_id,
+    ];
 
     $form['video_sno'] = [
       '#type' => 'textfield',
@@ -67,25 +69,23 @@ class EditLectureVideosForm extends FormBase {
 
     $form['description_of_video'] = [
       '#type' => 'text_format',
-      '#format' => $lecture_video_data->video_description_text_format,
       '#title' => $this->t('Description of the video'),
-      '#required' => TRUE,
       '#default_value' => $lecture_video_data->video_description_text,
+      '#format' => $lecture_video_data->video_description_text_format,
+      '#required' => TRUE,
     ];
 
     $form['link_to_video'] = [
       '#type' => 'textfield',
-      "#title" => $this->t("Paste the URL of the video lecture"),
-      '#size' => 255,
+      '#title' => $this->t('Paste the URL of the video lecture'),
       '#maxlength' => 255,
       '#required' => TRUE,
       '#default_value' => $lecture_video_data->video_link,
     ];
 
     $form['link_to_script_file'] = [
-      "#type" => "textfield",
-      "#title" => $this->t("Paste the URL of the script file of the video lecture"),
-      '#size' => 255,
+      '#type' => 'textfield',
+      '#title' => $this->t('Paste the URL of the script file of the video lecture'),
       '#maxlength' => 255,
       '#required' => TRUE,
       '#default_value' => $lecture_video_data->script_file_link,
@@ -104,40 +104,38 @@ class EditLectureVideosForm extends FormBase {
 
     $form['submit'] = [
       '#type' => 'submit',
-      '#value' => $this->t('Submit'),
+      '#value' => $this->t('Update'),
     ];
 
     return $form;
   }
 
   /**
-   * Submit form handler.
+   * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $values = $form_state->getValues();
-    $video_id = (int) \Drupal::routeMatch()->getParameter('video_id');
+    $video_id = (int) $values['video_id'];
 
-    $query = "UPDATE lecture_videos SET
-            video_title = :video_title,
-            video_description_text = :video_description_text,
-            video_description_text_format = :video_description_text_format,
-            script_file_link = :script_file_link,
-            video_link = :video_link,
-            video_visibility = :video_visibility
-            WHERE id = :video_id";
+    $connection = Database::getConnection();
+    $connection->update('lecture_videos')
+      ->fields([
+        'video_title' => $values['title_of_video'],
+        'video_description_text' => $values['description_of_video']['value'],
+        'video_description_text_format' => $values['description_of_video']['format'],
+        'script_file_link' => $values['link_to_script_file'],
+        'video_link' => $values['link_to_video'],
+        'video_visibility' => $values['lecture_visibility'],
+      ])
+      ->condition('id', $video_id)
+      ->execute();
 
-    $args = [
-      ":video_title" => $values['title_of_video'],
-      ":video_description_text" => $values['description_of_video']['value'],
-      ":video_description_text_format" => $values['description_of_video']['format'],
-      ":script_file_link" => $values['link_to_script_file'],
-      ":video_link" => $values['link_to_video'],
-      ":video_visibility" => $values['lecture_visibility'],
-      ":video_id" => $video_id,
-    ];
+    $this->messenger()->addStatus($this->t('Video details updated successfully.'));
 
-    \Drupal::database()->query($query, $args);
-    $this->messenger()->addStatus($this->t('Video details updated successfully'));
+    // Redirect back to the same edit page.
+    $form_state->setRedirectUrl(Url::fromRoute('cfd_research_migration.edit_lecture_video', [
+      'video_id' => $video_id,
+    ]));
   }
+
 }
-?>
