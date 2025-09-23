@@ -26,7 +26,6 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Drupal\Core\Messenger\MessengerInterface;
 use ZipArchive;
 
-
 /**
  * Default controller for the cfd_research_migration module.
  */
@@ -1165,16 +1164,22 @@ public function list_of_available_project_titles() {
   ");
 
   while ($result = $query->fetchObject()) {
-    // Use Url::fromUri() for external URLs
-          // $result->rm_project_title_name;
-$link = Link::fromTextAndUrl('Click Here', Url::fromUri($result->rm_project_link, ['attributes' => ['target' => '_blank']]))->toRenderable();
     // $url = Url::fromUri($result->rm_project_link, ['attributes' => ['target' => '_blank']]);
     // $link = Link::fromTextAndUrl('Click Here', $url)->toRenderable();
+
+       $url = Url::fromUri($result->rm_project_link, ['attributes' => ['target' => '_blank']]);
+$link = Link::fromTextAndUrl('Click Here', $url)->toString();
+
+// $rows[] = [
+//   $result->rm_project_title_name,
+//   $link, // ✅ This is a render array
+// ];
 
     $preference_rows[] = [
       $i,
       $result->rm_project_title_name,
-      $link, // render array directly
+            // $result->rm_project_link,
+      $link // render array directl
     ];
     $i++;
   }
@@ -1190,6 +1195,7 @@ $link = Link::fromTextAndUrl('Click Here', Url::fromUri($result->rm_project_link
     '#header' => $preference_header,
     '#rows' => $preference_rows,
   ];
+  // var_dump($result->rm_project_link);die;
 }
 
 
