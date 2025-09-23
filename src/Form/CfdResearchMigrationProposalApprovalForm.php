@@ -20,6 +20,8 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\DependencyInjection\ContainerInterface;
 use Drupal\Core\Session\AccountProxy;
+use Drupal\Component\Render\FormattableMarkup;
+
 
 class CfdResearchMigrationProposalApprovalForm extends FormBase {
 
@@ -197,29 +199,50 @@ class CfdResearchMigrationProposalApprovalForm extends FormBase {
       '#default_value' => date('d/m/Y', $proposal_data->expected_date_of_completion),
       '#disabled' => TRUE,
     ];
-    if (($query_abstract_pdf->filename != "") && ($query_abstract_pdf->filename != 'NULL')) {
-      // $str = substr($query_abstract_pdf->filename, strrpos($query_abstract_pdf->filename, '/'));
-      // $resource_file = ltrim($str, '/');
-      $resource_file = basename($query_abstract_pdf->filename);
+  //  if (($query_abstract_pdf->filename != "") && ($query_abstract_pdf->filename != 'NULL')) {
+  //       $str = substr($query_abstract_pdf->filename, strrpos($query_abstract_pdf->filename, '/'));
+  //       $resource_file = ltrim($str, '/');
+
+  //       $form['abstract_file_path'] = array(
+  //           '#type' => 'item',
+  //           '#title' => t('Synopsis file '),
+  //           '#markup' => l($resource_file, 'research-migration-project/download/project-file/' . $proposal_id) . "",
+  //       );
+  //   } //$proposal_data->user_defined_compound_filepath != ""
+  //   else {
+  //       $form['abstract_file_path'] = array(
+  //           '#type' => 'item',
+  //           '#title' => t('Synopsis file '),
+  //           '#markup' => "Not uploaded<br><br>",
+  //       );
+  //   }
 
 
-      $form['abstract_file_path'] = [
-          '#type' => 'item',
-          '#title' => t('Synopsis file '),
-          // '#markup' => l($resource_file, 'research-migration-project/download/project-file/' . $proposal_id) . "",
-          \Drupal\Core\Link::fromTextAndUrl($resource_file,
-      Url::fromUri('internal:/research-migration-project/download/project-file/' . $proposal_id)
-  )->toString(),
-      ];
-  } //$proposal_data->user_defined_compound_filepath != ""
-  else {
-      $form['abstract_file_path'] = [
-          '#type' => 'item',
-          '#title' => t('Synopsis file '),
-          '#markup' => "Not uploaded<br><br>",
-      ];
-  }
-  // var_dump(file_exists($query_abstract_pdf->filename));die;
+if (!empty($query_abstract_pdf->filename) && $query_abstract_pdf->filename != 'NULL') {
+    $str = substr($query_abstract_pdf->filename, strrpos($query_abstract_pdf->filename, '/'));
+    $resource_file = ltrim($str, '/');
+
+    // Create a URL for internal path
+    $url = Url::fromUserInput('/research-migration-project/download/project-file/' . $proposal_id);
+
+    // Create a renderable link
+    $link = Link::fromTextAndUrl($resource_file, $url)->toRenderable();
+
+    $form['abstract_file_path'] = [
+        '#type' => 'item',
+        '#title' => t('Synopsis file'),
+        '#markup' => render($link),
+    ];
+}
+else {
+    $form['abstract_file_path'] = [
+        '#type' => 'item',
+        '#title' => t('Synopsis file'),
+        '#markup' => "Not uploaded<br><br>",
+    ];
+}
+
+  // // var_dump(file_exists($query_abstract_pdf->filename));die;
 
 // $form['abstract_file_path'] = [
 //   '#type' => 'item',

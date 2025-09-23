@@ -43,136 +43,538 @@ class CfdResearchMigrationProposalForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-   public function buildForm(array $form, FormStateInterface $form_state, $no_js_use = FALSE) {
-    $current_user = \Drupal::currentUser();
+  public function buildForm(array $form, FormStateInterface $form_state, $no_js_use = NULL) {
+    $user = \Drupal::currentUser();
 
-    // Redirect anonymous users.
-    if ($current_user->isAnonymous()) {
-      $this->messenger()->addError($this->t('It is mandatory to <a href=":login">login</a> on this website to access the Research Migration proposal form. If you are a new user, please create a new account first.', [
-        ':login' => Url::fromRoute('user.login')->toString(),
-      ]));
-      return new RedirectResponse(Url::fromRoute('user.login', [], ['query' => \Drupal::destination()->getAsArray()])->toString());
-    }
+    // if ($user->isAnonymous()) {
+    //   // Redirect anonymous users to the login page.
+    //   $response = new RedirectResponse(Url::fromRoute('user.login')->toString());
+    //   $response->send();
+    //   return [];
+    // }
 
-    // Check for existing proposal.
-    $connection = \Drupal::database();
-    $query = $connection->select('research_migration_proposal', 'r')
-      ->fields('r')
-      ->condition('uid', $current_user->id())
-      ->orderBy('id', 'DESC')
-      ->range(0, 1);
-    $proposal_data = $query->execute()->fetchObject();
+    // // Fetch latest proposal data.
+    // $query = \Drupal::database()->select('research_migration_proposal', 'rmp')
+    //   ->fields('rmp')
+    //   ->condition('uid', $user->id())
+    //   ->orderBy('id', 'DESC')
+    //   ->range(0, 1);
+    // $proposal_data = $query->execute()->fetchAssoc();
 
-    if ($proposal_data && in_array($proposal_data->approval_status, [0, 1])) {
-      $this->messenger()->addStatus($this->t('We have already received your proposal.'));
-      return new RedirectResponse(Url::fromRoute('<front>')->toString());
-    }
+    // if ($proposal_data && in_array($proposal_data['approval_status'], [0, 1])) {
+    //   \Drupal::messenger()->addMessage($this->t('We have already received your proposal.'), 'status');
+    //   return [];
+    // }
+        /************************ start approve book details ************************/
+        if ($user->id() == 0) {
+          $msg = \Drupal::messenger()->addError(t('It is mandatory to ' . \Drupal\Core\Link::fromTextAndUrl('login', \Drupal\Core\Url::fromRoute('user.page')) . ' on this website to access the Research Migration proposal form. If you are new user please create a new account first.'));
+          drupal_goto('user/login', ['query' => drupal_get_destination()]);
+          return $msg;
+        } //$user->uid == 0
+        $query = \Drupal::database()->select('research_migration_proposal');
+        $query->fields('research_migration_proposal');
+        $query->condition('uid', $user->id());
+        $query->orderBy('id', 'DESC');
+        $query->range(0, 1);
+        $proposal_q = $query->execute();
+        $proposal_data = $proposal_q->fetchObject();
+        if ($proposal_data) {
+          if ($proposal_data->approval_status == 0 || $proposal_data->approval_status == 1) {
+            \Drupal::messenger()->addStatus(t('We have already received your proposal.'));
+            // drupal_goto('');
+            return;
+          } //$proposal_data->approval_status == 0 || $proposal_data->approval_status == 1
+        } //$proposal_data
 
-    $form['#attributes']['enctype'] = 'multipart/form-data';
+    $form['#attributes'] = ['enctype' => "multipart/form-data"];
 
     $form['name_title'] = [
       '#type' => 'select',
       '#title' => $this->t('Title'),
-      '#options' => [
-        'Dr' => 'Dr',
-        'Prof' => 'Prof',
-        'Mr' => 'Mr',
-        'Ms' => 'Ms',
-      ],
+      '#options' => ['Dr' => 'Dr', 
+                    'Prof' => 'Prof',
+                    'Mr' => 'Mr',
+                    'Ms' => 'Ms'],
       '#required' => TRUE,
     ];
 
     $form['contributor_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Name of the contributor'),
-      '#size' => 250,
-      '#attributes' => ['placeholder' => $this->t('Enter your full name.....')],
       '#maxlength' => 250,
+      '#attributes' => ['placeholder' => $this->t('Enter your full name...')],
       '#required' => TRUE,
     ];
 
     $form['contributor_email_id'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Email'),
-      '#size' => 30,
-      '#default_value' => $current_user->getEmail(),
+      '#title' => t('Email'),
+      '#default_value' => $user->getEmail(),
       '#disabled' => TRUE,
     ];
 
     $form['contributor_contact_no'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Contact No.'),
-      '#size' => 10,
+      '#maxlength' => 15,
       '#attributes' => ['placeholder' => $this->t('Enter your contact number')],
-      '#maxlength' => 250,
     ];
 
-    // Example of dependent fields (Country).
-    $form['country'] = [
+    $form['university'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('University'),
+      '#maxlength' => 200,
+      '#required' => TRUE,
+      '#attributes' => ['placeholder' => $this->t('Insert full name of your university...')],
+    ];
+
+    $form['institute'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Institute'),
+      '#maxlength' => 200,
+      '#required' => TRUE,
+      '#attributes' => ['placeholder' => $this->t('Insert full name of your institute.... ')],
+    ];
+
+    $form['how_did_you_know_about_project'] = [
       '#type' => 'select',
-      '#title' => $this->t('Country'),
+      '#title' => $this->t('How did you come to know about the Research Migration Project?'),
       '#options' => [
-        'India' => 'India',
+        'Poster' => 'Poster',
+        'Website' => 'Website',
+        'Email' => 'Email',
         'Others' => 'Others',
       ],
       '#required' => TRUE,
     ];
 
-    $form['other_country'] = [
+    $form['others_how_did_you_know_about_project'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Other than India'),
-      '#size' => 100,
-      '#attributes' => ['placeholder' => $this->t('Enter your country name')],
+      '#title' => $this->t('If ‘Other’, please specify'),
+      '#maxlength' => 50,
       '#states' => [
         'visible' => [
-          ':input[name="country"]' => ['value' => 'Others'],
+          ':input[name="how_did_you_know_about_project"]' => ['value' => 'Others'],
         ],
       ],
     ];
 
-    // TODO: Continue adding all other fields from your D7 form here...
+    $form['faculty_name'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Name of the Faculty Member of your Institution, if any, who helped you with this Research Migration Project'),
+      '#size' => 50,
+      '#maxlength' => 50,
+      '#validated' => TRUE,
+      '#description' => t('<span style="color:red">Maximum character limit is 50</span>')
+      );
+      $form['faculty_department'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Department of the Faculty Member of your Institution, if any, who helped you with this Research Migration Project'),
+      '#size' => 50,
+      '#maxlength' => 50,
+      '#validated' => TRUE,
+      '#description' => t('<span style="color:red">Maximum character limit is 50</span>')
+      );
+      $form['faculty_email'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Email id of the Faculty Member of your Institution, if any, who helped you with this Research Migration Project'),
+      '#size' => 255,
+      '#maxlength' => 255,
+      '#validated' => TRUE,
+      '#description' => t('<span style="color:red">Maximum character limit is 255</span>')
+      );
+      
 
-    // File upload example.
-    $form['abstract_file'] = [
-      '#type' => 'managed_file',
-      '#title' => $this->t('Synopsis Submission'),
-      '#description' => $this->t('Allowed file extensions: @ext', [
-        '@ext' => \Drupal::config('system.file')->get('allowed_extensions'),
-      ]),
-      '#upload_location' => 'public://abstracts/',
+    // $form['country'] = [
+    //   '#type' => 'select',
+    //   '#title' => $this->t('Country'),
+    //   '#options' => ['India' => 'India', 'Others' => 'Others'],
+    //   '#required' => TRUE,
+    // ];
+
+    // $form['other_country'] = [
+    //   '#type' => 'textfield',
+    //   '#title' => $this->t('Other Country'),
+    //   '#states' => [
+    //     'visible' => [
+    //       ':input[name="country"]' => ['value' => 'Others'],
+    //     ],
+    //   ],
+    // ];
+    $form['country'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Country'),
+      '#options' => ['India' => 'India', 'Others' => 'Others'],
       '#required' => TRUE,
-    ];
-
-    // Dates - Use datetime instead of date_popup.
-    $form['date_of_proposal'] = [
-      '#type' => 'datetime',
-      '#title' => $this->t('Date of Proposal'),
-      '#default_value' => \Drupal\Core\Datetime\DrupalDateTime::createFromTimestamp(REQUEST_TIME),
-      '#disabled' => TRUE,
-    ];
-
-    $form['expected_date_of_completion'] = [
-      '#type' => 'datetime',
-      '#title' => $this->t('Expected Date of Completion'),
-      '#date_date_format' => 'd-m-Y',
+      ];
+      $form['other_country'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Other than India'),
+      '#states' => ['visible' => [':input[name="country"]' => ['value' => 'Others']]],
+      ];
+      
+      $form['country'] = [
+      '#type' => 'select',
+      '#title' => t('Country'),
+      '#options' => [
+      'India' => 'India',
+      'Others' => 'Others',
+      ],
       '#required' => TRUE,
+      '#tree' => TRUE,
+      ];
+      $form['other_country'] = [
+      '#type' => 'textfield',
+      '#title' => t('Other Country'),
+      '#size' => 100,
+      '#attributes' => [
+      'placeholder' => t('Enter your country name')
+      ],
+      '#states' => [
+      'visible' => [
+      ':input[name="country"]' => [
+      'value' => 'Others'
+      ]
+      ]
+      ],
+      ];
+      $form['other_state'] = [
+      '#type' => 'textfield',
+      '#title' => t('State'),
+      '#size' => 100,
+      '#attributes' => [
+      'placeholder' => t('Enter your state/region name')
+      ],
+      '#states' => [
+      'visible' => [
+      ':input[name="country"]' => [
+      'value' => 'Others'
+      ]
+      ]
+      ],
+      ];
+      $form['other_city'] = [
+      '#type' => 'textfield',
+      '#title' => t('City'),
+      '#size' => 100,
+      '#attributes' => [
+      'placeholder' => t('Enter your city name')
+      ],
+      '#states' => [
+      'visible' => [
+      ':input[name="country"]' => [
+      'value' => 'Others'
+      ]
+      ]
+      ],
+      ];
+      $form['all_state'] = [
+      '#type' => 'select',
+      '#title' => t('State'),
+      '#options' => \Drupal::service("cfd_research_migration_global")->_rm_df_list_of_states(),
+      '#validated' => TRUE,
+      '#states' => [
+      'visible' => [
+      ':input[name="country"]' => [
+      'value' => 'India'
+      ]
+      ]
+      ],
+      ];
+      $form['city'] = [
+      '#type' => 'select',
+      '#title' => t('City'),
+      '#options' => \Drupal::service("cfd_research_migration_global")->_df_list_of_cities(),
+      '#states' => [
+      'visible' => [
+      ':input[name="country"]' => [
+      'value' => 'India'
+      ]
+      ]
+      ],
+      ];
+      
+
+    $form['pincode'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Pincode'),
+      '#size' => 6,
     ];
 
-    $form['term_condition'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('<a href="/research-migration-project/term-and-conditions" target="_blank">I agree to the Terms and Conditions</a>'),
-      '#required' => TRUE,
+    $form['hr'] = [
+      '#type' => 'item',
+      '#markup' => '<hr>'
     ];
+//     $list_research_migration = \Drupal::service("cfd_research_migration_global")->_rm_list_of_research_migration();
+// //var_dump($list_research_migration);die;
+// if(!empty($list_research_migration))
+// {
+// $form['cfd_project_title_check'] = array(
+//   '#type' => 'radios',
+//   '#title' => t('Is the proposed CFD Research Migration from the list of available Research Migration Projects?'),
+//   '#options' => array(
+//     '1' => t('Yes'),
+//     '0' => t('No'),
+//   ),
+//   '#required' => TRUE,
+// );
 
-    $form['submit'] = [
-      '#type' => 'submit',
-      '#value' => $this->t('Submit'),
-    ];
+// $form['cfd_research_migration_name_dropdown'] = [
+//   '#type' => 'select',
+//   '#title' => t('Select the name of available Research Migration Project'),
+//   '#required' => TRUE,
+//   '#options' => \Drupal::service("cfd_research_migration_global")->_rm_list_of_research_migration(),
+//   '#states' => array(
+//     'visible' => array(
+//       ':input[name="cfd_project_title_check"]' => array('value' => '1'),
+//     ),
+//   ),
+// ];
 
-    return $form;
+// $form['project_title'] = array(
+//   '#type' => 'textfield',
+//   '#title' => t('Title of the Research Migration Project'),
+//   '#size' => 80,
+//   '#maxlength' => 250,
+//   '#description' => t('Maximum character limit is 250'),
+//   '#required' => TRUE,
+//   '#states' => array(
+//     'visible' => array(
+//       ':input[name="cfd_project_title_check"]' => array('value' => '0'),
+//     ),
+//   ),
+// );
+
+//   }
+//   else
+//   { 
+//   $form['project_title'] = array(
+//   '#type' => 'textfield',
+//   '#title' => t('Title of the Research Migration Project'),
+//   '#size' => 80, 
+//   '#maxlength' => 250,
+//   '#description' => t('Maximum character limit is 250'),
+//   '#required' => TRUE,
+//   '#validated' => TRUE,
+//   );
+//   }
+
+// -------------------------
+$list = \Drupal::service('cfd_research_migration_global')->_rm_list_of_research_migration();
+
+// Radio: Yes/No
+$form['cfd_project_title_check'] = [
+  '#type' => 'radios',
+  '#title' => $this->t('Is the proposed CFD Research Migration from the list of available Research Migration Projects?'),
+  '#options' => [
+    '1' => $this->t('Yes'),
+    '0' => $this->t('No'),
+  ],
+  '#required' => TRUE,
+  '#ajax' => [
+    'callback' => '::updateResearchMigrationFields',
+    'wrapper' => 'research-migration-wrapper',
+    'event' => 'change',
+  ],
+];
+
+// Begin container wrapper for dynamic fields
+$form['research_migration_fields'] = [
+  '#type' => 'container',
+  '#attributes' => ['id' => 'research-migration-wrapper'],
+];
+
+// Dropdown: only shown if Yes selected
+$list = \Drupal::service('cfd_research_migration_global')->_rm_list_of_research_migration();
+$list = $list ?? []; // <-- default to empty array if null
+
+$form['research_migration_fields']['cfd_research_migration_name_dropdown'] = [
+  '#type' => 'select',
+  '#title' => $this->t('Select the name of available Research Migration Project'),
+  '#required' => TRUE,
+  '#options' => $list,
+  '#states' => [
+    'visible' => [
+      ':input[name="cfd_project_title_check"]' => ['value' => '1'],
+    ],
+  ],
+];
+
+// Textfield: only shown if No selected or no list
+$form['research_migration_fields']['project_title'] = [
+  '#type' => 'textfield',
+  '#title' => $this->t('Title of the Research Migration Project'),
+  '#size' => 80,
+  '#maxlength' => 250,
+  '#description' => $this->t('Maximum character limit is 250'),
+  '#required' => TRUE,
+  '#states' => [
+    'visible' => [
+      ':input[name="cfd_project_title_check"]' => ['value' => '0'],
+    ],
+  ],
+];
+ $form['source_of_the_project'] = array(
+  '#type' => 'textfield',
+  '#title' => t('Source of the Project'),
+  '#size' => 80,
+  '#maxlength' => 200,
+  '#required' => TRUE,
+  '#attributes' => array(
+  'placeholder' => 'Insert the Journal name, title of proceedings (for conference papers) '
+  )
+  );
+  $version_options = _rm_list_of_versions();
+  $form['version'] = array(
+  '#type' => 'select',
+  '#title' => t('OpenFOAM Version to be used'),
+  '#options' => $version_options,
+  '#required' => TRUE,
+  '#description' => t('Insert OpenFOAM version used. Example: OpenFOAM v7, OpenFOAM v1912, foam-extend 4.1 etc')
+  );
+  $simulation_type_options = \Drupal::service("cfd_research_migration_global")->_rm_list_of_simulation_types();
+  $form['simulation_type'] = array(
+  '#type' => 'select',
+  '#title' => t('OpenFOAM Simulation Type used'),
+  '#options' => $simulation_type_options,
+  '#required' => TRUE,
+  '#ajax' => array(
+  'callback' => '::ajax_solver_used_callback',
+  ),
+  );
+
+  // $simulation_id = isset($form_state['values']['simulation_type']) ? $form_state['values']['simulation_type'] : key($simulation_type_options);
+  // if($simulation_id < 19){
+  // $form['solver_used'] = array(
+  // '#type' => 'select',
+  // '#title' => t('Select the Solver to be used'),
+  // '#options' => \Drupal::service("cfd_research_migration_global")->_rm_list_of_solvers($simulation_id),
+  // '#default_value' => 0,
+  // '#prefix' => '<div id="ajax-solver-replace">',
+  // '#suffix' => '</div>',
+  // '#states' => array(
+  // 'invisible' => array(
+  // ':input[name="simulation_type"]' => array(
+  // 'value' => 19
+  // )
+  // )
+  // ),
+  // '#required' => TRUE
+  // );
+  // }
+  // //else if ($simulation_id == 19){
+  // $form['solver_used_text'] = array(
+  // '#type' => 'textfield',
+  // '#title' => t('Enter the Solver to be used'),
+  // '#size' => 100,
+  // '#description' => t('Maximum character limit is 50'),
+  // //'#required' => TRUE,
+  // '#prefix' => '<div id="ajax-solver-text-replace">',
+  // '#suffix' => '</div>',
+  // '#states' => array(
+  // 'visible' => array(
+  // ':input[name="simulation_type"]' => array(
+  // 'value' => 19
+  // )
+  // )
+  // ),
+  // );
+  // }
+  
+  $simulation_id = $form_state->hasValue('simulation_type') ? $form_state->getValue('simulation_type') : key($simulation_type_options);
+  
+  if ($simulation_id < 19) {
+  $form['solver_used'] = [
+  '#type' => 'select',
+  '#title' => t('Select the Solver to be used'),
+  '#options' => \Drupal::service("cfd_research_migration_global")->_rm_list_of_solvers($simulation_id),
+  '#default_value' => 0,
+  '#prefix' => '<div id="ajax-solver-replace">',
+  '#suffix' => '</div>',
+  '#states' => [
+  'invisible' => [
+  ':input[name="simulation_type"]' => ['value' => 19]
+  ]
+  ],
+  '#required' => TRUE,
+  ];
   }
+  
+  $form['solver_used_text'] = [
+  '#type' => 'textfield',
+  '#title' => t('Enter the Solver to be used'),
+  '#size' => 100,
+  '#description' => t('Maximum character limit is 50'),
+  '#prefix' => '<div id="ajax-solver-text-replace">',
+  '#suffix' => '</div>',
+  '#states' => [
+  'visible' => [
+  ':input[name="simulation_type"]' => ['value' => 19]
+  ]
+  ],
+  ];
+  
+  $form['abstract_file'] = [
+  '#type' => 'fieldset',
+  '#title' => t('<span style="color:black;">Synopsis Submission</span> <span style="color:#f00;">*</span>'),
+  '#required' => TRUE,
+  '#collapsible' => FALSE,
+  '#collapsed' => FALSE
+  ];
+  
+  $form['abstract_file']['abstract_file_path'] = [
+  '#type' => 'file',
+  '#size' => 48,
+  '#description' => t('<span style="color:red;">Upload filenames with allowed extensions only. No spaces or any special characters allowed in filename.</span>') . '<br />' . $this->t('<span style="color:red;">Allowed file extensions : ') . \Drupal::config('cfd_research_migration.settings')->get('resource_upload_extensions') . '</span>'
+  ];
+  
 
+  
+  $form['date_of_proposal'] = [
+    '#type' => 'date',  // Use date type (not datetime)
+    '#title' => $this->t('Date of Proposal'),
+    '#default_value' => date('Y-m-d'), // Today's date in Y-m-d format (no time)
+    '#disabled' => TRUE, // Disable the field if it should not be editable by the user
+  ];
+  
+   $form['expected_date_of_completion'] = [
+  '#type' => 'date',
+  '#title' => $this->t('Expected Date of Completion'),
+  '#required' => TRUE,
+  ];
+  // $form['term_condition'] = [
+  // '#type' => 'checkbox',
+  // '#title' => $this->t('I agree to the <a href=":url" target="_blank">Terms and Conditions</a>', [
+  // '$Url' => \Drupal::url('research_migration_project.term_and_conditions', [], ['absolute' => TRUE])
+  // ]),
+  // '#required' => TRUE,
+  // ];
+  
+  $form['term_condition'] = [
+  '#type' => 'checkboxes',
+  '#title' => t('Terms And Conditions'),
+  '#options' => [
+  'status' => t('<a href="/research-migration-project/term-and-conditions" target="_blank">I agree to the Terms and Conditions</a>')
+  ],
+  '#required' => TRUE,
+  ];
+  $form['submit'] = [
+  '#type' => 'submit',
+  '#value' => $this->t('Submit'),
+  ];
+  
 
+// Submit button
+$form['submit'] = [
+  '#type' => 'submit',
+  '#value' => $this->t('Submit'),
+];
+
+return $form;
+
+// ------------------------
+   
+}
 
 public function updateResearchMigrationFields(array &$form, FormStateInterface $form_state) {
   return $form['research_migration_fields'];
@@ -609,3 +1011,4 @@ function ajax_solver_used_callback(array &$form, FormStateInterface $form_state)
 
 
 ?>
+	

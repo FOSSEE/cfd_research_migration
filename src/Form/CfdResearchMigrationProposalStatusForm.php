@@ -31,7 +31,7 @@ class CfdResearchMigrationProposalStatusForm extends FormBase {
     // $proposal_id = (int) arg(3);
     $route_match = \Drupal::routeMatch();
 
-    $proposal_id = (int) $route_match->getParameter('id');
+    $proposal_id = (int) $route_match->getParameter('proposal_id');
     // var_dump($proposal_id);die;
     $query = \Drupal::database()->select('research_migration_proposal');
     $query->fields('research_migration_proposal');

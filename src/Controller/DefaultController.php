@@ -24,6 +24,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Drupal\Core\Messenger\MessengerInterface;
+use ZipArchive;
 
 
 /**
@@ -760,69 +761,70 @@ public function cfd_research_migration_abstract() {
 //     ];
 // }
 
-  public function cfd_research_migration_download_full_project() {
-    $user = \Drupal::currentUser();
-    $id = arg(3);
-    $root_path = cfd_research_migration_path();
-    //var_dump($root_path);die;
-    $query = \Drupal::database()->select('research_migration_proposal');
-    $query->fields('research_migration_proposal');
-    $query->condition('id', $id);
-    $research_migration_q = $query->execute();
-    $research_migration_data = $research_migration_q->fetchObject();
-    $research_migration_PATH = $research_migration_data->directory_name . '/';
-    /* zip filename */
-    $zip_filename = $root_path . 'zip-' . time() . '-' . rand(0, 999999) . '.zip';
-    /* creating zip archive on the server */
-    $zip = new ZipArchive();
-    $zip->open($zip_filename, ZipArchive::CREATE);
-    $query = \Drupal::database()->select('research_migration_proposal');
-    $query->fields('research_migration_proposal');
-    $query->condition('id', $id);
-    $circuit_simulation_udc_q = $query->execute();
-    $query = \Drupal::database()->select('research_migration_proposal');
-    $query->fields('research_migration_proposal');
-    $query->condition('id', $id);
-    $query = \Drupal::database()->select('research_migration_submitted_abstracts_file');
-    $query->fields('research_migration_submitted_abstracts_file');
-    $query->condition('proposal_id', $id);
-    $project_files = $query->execute();
-    while ($cfd_project_files = $project_files->fetchObject()) {
-      $zip->addFile($root_path . $research_migration_PATH . $cfd_project_files->filepath, $research_migration_PATH . str_replace(' ', '_', basename($cfd_project_files->filename)));
-    }
-    $zip_file_count = $zip->numFiles;
-    $zip->close();
-    if ($zip_file_count > 0) {
-      if ($user->uid) {
-        /* download zip file */
-        header('Content-Type: application/zip');
-        header('Content-disposition: attachment; filename="' . str_replace(' ', '_', $research_migration_data->project_title) . '.zip"');
-        header('Content-Length: ' . filesize($zip_filename));
-        ob_end_flush();
-        ob_clean();
-        flush();
-        readfile($zip_filename);
-        unlink($zip_filename);
-      } //$user->uid
-      else {
-        header('Content-Type: application/zip');
-        header('Content-disposition: attachment; filename="' . str_replace(' ', '_', $research_migration_data->project_title) . '.zip"');
-        header('Content-Length: ' . filesize($zip_filename));
-        header("Content-Transfer-Encoding: binary");
-        header('Expires: 0');
-        header('Pragma: no-cache');
-        ob_end_flush();
-        ob_clean();
-        flush();
-        readfile($zip_filename);
-        unlink($zip_filename);
-      }
-    } //$zip_file_count > 0
-    else {
-      \Drupal::messenger()->addMessage("There are no research migration project in this proposal to download", 'error');
-      drupal_goto('circuit-simulation-project/full-download/project');
-    }
-  }
+  // public function cfd_research_migration_download_full_project() {
+  //   $user = \Drupal::currentUser();
+  //   $id = arg(3);
+
+  //   $root_path = cfd_research_migration_path();
+  //   //var_dump($root_path);die;
+  //   $query = \Drupal::database()->select('research_migration_proposal');
+  //   $query->fields('research_migration_proposal');
+  //   $query->condition('id', $id);
+  //   $research_migration_q = $query->execute();
+  //   $research_migration_data = $research_migration_q->fetchObject();
+  //   $research_migration_PATH = $research_migration_data->directory_name . '/';
+  //   /* zip filename */
+  //   $zip_filename = $root_path . 'zip-' . time() . '-' . rand(0, 999999) . '.zip';
+  //   /* creating zip archive on the server */
+  //   $zip = new ZipArchive();
+  //   $zip->open($zip_filename, ZipArchive::CREATE);
+  //   $query = \Drupal::database()->select('research_migration_proposal');
+  //   $query->fields('research_migration_proposal');
+  //   $query->condition('id', $id);
+  //   $circuit_simulation_udc_q = $query->execute();
+  //   $query = \Drupal::database()->select('research_migration_proposal');
+  //   $query->fields('research_migration_proposal');
+  //   $query->condition('id', $id);
+  //   $query = \Drupal::database()->select('research_migration_submitted_abstracts_file');
+  //   $query->fields('research_migration_submitted_abstracts_file');
+  //   $query->condition('proposal_id', $id);
+  //   $project_files = $query->execute();
+  //   while ($cfd_project_files = $project_files->fetchObject()) {
+  //     $zip->addFile($root_path . $research_migration_PATH . $cfd_project_files->filepath, $research_migration_PATH . str_replace(' ', '_', basename($cfd_project_files->filename)));
+  //   }
+  //   $zip_file_count = $zip->numFiles;
+  //   $zip->close();
+  //   if ($zip_file_count > 0) {
+  //     if ($user->uid) {
+  //       /* download zip file */
+  //       header('Content-Type: application/zip');
+  //       header('Content-disposition: attachment; filename="' . str_replace(' ', '_', $research_migration_data->project_title) . '.zip"');
+  //       header('Content-Length: ' . filesize($zip_filename));
+  //       ob_end_flush();
+  //       ob_clean();
+  //       flush();
+  //       readfile($zip_filename);
+  //       unlink($zip_filename);
+  //     } //$user->uid
+  //     else {
+  //       header('Content-Type: application/zip');
+  //       header('Content-disposition: attachment; filename="' . str_replace(' ', '_', $research_migration_data->project_title) . '.zip"');
+  //       header('Content-Length: ' . filesize($zip_filename));
+  //       header("Content-Transfer-Encoding: binary");
+  //       header('Expires: 0');
+  //       header('Pragma: no-cache');
+  //       ob_end_flush();
+  //       ob_clean();
+  //       flush();
+  //       readfile($zip_filename);
+  //       unlink($zip_filename);
+  //     }
+  //   } //$zip_file_count > 0
+  //   else {
+  //     \Drupal::messenger()->addMessage("There are no research migration project in this proposal to download", 'error');
+  //     drupal_goto('circuit-simulation-project/full-download/project');
+  //   }
+  // }
 
   // public function cfd_research_migration_completed_proposals_all() {
   //   $output = "";
@@ -878,7 +880,68 @@ public function cfd_research_migration_abstract() {
   //   }
   //   return $output;
   // }
- 
+
+public function cfd_research_migration_download_full_project() {
+    $user = \Drupal::currentUser();
+    $route_match = \Drupal::routeMatch();
+    $id = (int) $route_match->getParameter('proposal_id'); // assuming the route has {proposal_id}
+
+    $root_path = \Drupal::service('cfd_research_migration_global')->cfd_research_migration_path();
+
+    // Fetch proposal data
+    $research_migration_data = \Drupal::database()->select('research_migration_proposal', 'rmp')
+        ->fields('rmp')
+        ->condition('id', $id)
+        ->execute()
+        ->fetchObject();
+
+    if (!$research_migration_data) {
+        throw new \Symfony\Component\HttpKernel\Exception\NotFoundHttpException('Proposal not found.');
+    }
+
+    $research_migration_PATH = $research_migration_data->directory_name . '/';
+
+    // Fetch all submitted project files
+    $project_files = \Drupal::database()->select('research_migration_submitted_abstracts_file', 'rmsaf')
+        ->fields('rmsaf')
+        ->condition('proposal_id', $id)
+        ->execute();
+
+    // Create temporary zip file
+    $zip_filename = $root_path . 'zip-' . time() . '-' . rand(0, 999999) . '.zip';
+    $zip = new ZipArchive();
+    if ($zip->open($zip_filename, ZipArchive::CREATE) !== TRUE) {
+        throw new \Exception('Cannot create zip file.');
+    }
+
+    $file_count = 0;
+    while ($cfd_project_files = $project_files->fetchObject()) {
+        $file_path = $root_path . $research_migration_PATH . $cfd_project_files->filepath;
+        if (file_exists($file_path)) {
+            $zip->addFile($file_path, $research_migration_PATH . str_replace(' ', '_', basename($cfd_project_files->filename)));
+            $file_count++;
+        }
+    }
+    $zip->close();
+
+    if ($file_count === 0) {
+        \Drupal::messenger()->addError("There are no research migration project files in this proposal to download.");
+        return new \Symfony\Component\HttpFoundation\RedirectResponse(Url::fromRoute('cfd_research_migration.download_full_project')->toString());
+    }
+
+    // Return zip file as BinaryFileResponse
+    $response = new BinaryFileResponse($zip_filename);
+    $response->setContentDisposition(
+        ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+        str_replace(' ', '_', $research_migration_data->project_title) . '.zip'
+    );
+
+    // Delete the zip after sending
+    $response->deleteFileAfterSend(true);
+
+    return $response;
+}
+
 
 public function cfd_research_migration_completed_proposals_all() {
     $output = [];
@@ -952,82 +1015,186 @@ public function cfd_research_migration_completed_proposals_all() {
 }
 
 
-  public function cfd_research_migration_progress_all() {
-    $page_content = "";
-    $query = \Drupal::database()->select('research_migration_proposal');
-    $query->fields('research_migration_proposal');
+  // public function cfd_research_migration_progress_all() {
+  //   $page_content = "";
+  //   $query = \Drupal::database()->select('research_migration_proposal');
+  //   $query->fields('research_migration_proposal');
+  //   $query->condition('approval_status', 1);
+  //   $query->condition('is_completed', 0);
+  //   $query->orderBy('approval_date', DESC);
+  //   $result = $query->execute();
+  //   if ($result->rowCount() == 0) {
+  //     $page_content .= "Work is in progress for the following research migration under Research Migration Project<hr>";
+  //   } //$result->rowCount() == 0
+  //   else {
+  //     $page_content .= "Work is in progress for the following research migration under Research Migration Project<hr>";
+  //     $preference_rows = [];
+  //     $i = $result->rowCount();
+  //     while ($row = $result->fetchObject()) {
+  //       $approval_date = date("Y", $row->approval_date);
+  //       $preference_rows[] = [
+  //         $i,
+  //         $row->project_title,
+  //         $row->contributor_name,
+  //         $row->university,
+  //         $approval_date,
+  //       ];
+  //       $i--;
+  //     } //$row = $result->fetchObject()
+  //     $preference_header = [
+  //       'No',
+  //       'Research Migration Project',
+  //       'Contributor Name',
+  //       'Institute/ University',
+  //       'Year',
+  //     ];
+  //     $page_content .= theme('table', [
+  //       'header' => $preference_header,
+  //       'rows' => $preference_rows,
+  //     ]);
+  //   }
+  //   return $page_content;
+  // }
+
+
+public function cfd_research_migration_progress_all() {
+    $query = Database::getConnection()->select('research_migration_proposal', 'rmp');
+    $query->fields('rmp');
     $query->condition('approval_status', 1);
     $query->condition('is_completed', 0);
-    $query->orderBy('approval_date', DESC);
+    $query->orderBy('approval_date', 'DESC');
     $result = $query->execute();
-    if ($result->rowCount() == 0) {
-      $page_content .= "Work is in progress for the following research migration under Research Migration Project<hr>";
-    } //$result->rowCount() == 0
-    else {
-      $page_content .= "Work is in progress for the following research migration under Research Migration Project<hr>";
-      $preference_rows = [];
-      $i = $result->rowCount();
-      while ($row = $result->fetchObject()) {
-        $approval_date = date("Y", $row->approval_date);
-        $preference_rows[] = [
-          $i,
-          $row->project_title,
-          $row->contributor_name,
-          $row->university,
-          $approval_date,
-        ];
-        $i--;
-      } //$row = $result->fetchObject()
-      $preference_header = [
-        'No',
-        'Research Migration Project',
-        'Contributor Name',
-        'Institute/ University',
-        'Year',
-      ];
-      $page_content .= theme('table', [
-        'header' => $preference_header,
-        'rows' => $preference_rows,
-      ]);
-    }
-    return $page_content;
-  }
 
-  public function list_of_available_project_titles() {
-    $output = "";
-    //$static_url = "https://static.fossee.in/cfd/project-titles/";
-    $preference_rows = [];
-    $i = 1;
-    $query = \Drupal::database()->query("SELECT * from rm_list_of_project_titles WHERE {rm_project_title_name} NOT IN( SELECT  project_title from research_migration_proposal WHERE approval_status = 0 OR approval_status = 1 OR approval_status = 3)");
-    while ($result = $query->fetchObject()) {
-      $preference_rows[] = [
-        $i,
-        //print_r(array_keys($case_studies_list))
-				$result->rm_project_title_name,
-        l('Click Here', $result->rm_project_link, [
-          'attributes' => [
-            'target' => '_blank'
-            ]
-          ]),
-        //l(Download, 'research-migration-project/download/project-title-file/' .$result->id)
-      ];
-      $i++;
+    // Fetch all rows at once
+    $rows_data = $result->fetchAll();
+    $row_count = count($rows_data);
+
+    if ($row_count == 0) {
+        $output = [
+            '#markup' => $this->t('Work is in progress for the following research migration under Research Migration Project') . '<hr>',
+        ];
+    } else {
+        $rows = [];
+        $i = $row_count;
+
+        foreach ($rows_data as $row) {
+$approval_year = date("Y", $row->approval_date);
+            $rows[] = [
+                $i,
+                $row->project_title,
+                $row->contributor_name,
+                $row->university,
+                $approval_year,
+            ];
+            $i--;
+        }
+
+        $header = [
+            'No',
+            'Research Migration Project',
+            'Contributor Name',
+            'Institute/ University',
+            'Year',
+        ];
+
+        $output = [
+            'message' => [
+                '#markup' => $this->t('Work is in progress for the following research migration under Research Migration Project') . '<hr>',
+            ],
+            'table' => [
+                '#type' => 'table',
+                '#header' => $header,
+                '#rows' => $rows,
+                '#empty' => $this->t('No research migration projects in progress.'),
+            ],
+        ];
     }
-    $preference_header = [
-      'No',
-      'List of available projects',
-      'Link to the paper',
-    ];
-    $output .= theme('table', [
-      'header' => $preference_header,
-      'rows' => $preference_rows,
-    ]);
 
     return $output;
+}
+
+  // public function list_of_available_project_titles() {
+  //   $output = "";
+  //   //$static_url = "https://static.fossee.in/cfd/project-titles/";
+  //   $preference_rows = [];
+  //   $i = 1;
+  //   $query = \Drupal::database()->query("SELECT * from rm_list_of_project_titles WHERE {rm_project_title_name} NOT IN( SELECT  project_title from research_migration_proposal WHERE approval_status = 0 OR approval_status = 1 OR approval_status = 3)");
+  //   while ($result = $query->fetchObject()) {
+  //     $preference_rows[] = [
+  //       $i,
+  //       //print_r(array_keys($case_studies_list))
+	// 			$result->rm_project_title_name,
+  //       l('Click Here', $result->rm_project_link, [
+  //         'attributes' => [
+  //           'target' => '_blank'
+  //           ]
+  //         ]),
+  //       //l(Download, 'research-migration-project/download/project-title-file/' .$result->id)
+  //     ];
+  //     $i++;
+  //   }
+  //   $preference_header = [
+  //     'No',
+  //     'List of available projects',
+  //     'Link to the paper',
+  //   ];
+  //   $output .= theme('table', [
+  //     'header' => $preference_header,
+  //     'rows' => $preference_rows,
+  //   ]);
+
+  //   return $output;
+  // }
+
+
+
+
+public function list_of_available_project_titles() {
+  $preference_rows = [];
+  $i = 1;
+
+  $connection = Database::getConnection();
+  $query = $connection->query("
+    SELECT * 
+    FROM rm_list_of_project_titles 
+    WHERE rm_project_title_name NOT IN (
+      SELECT project_title 
+      FROM research_migration_proposal 
+      WHERE approval_status IN (0,1,3)
+    )
+  ");
+
+  while ($result = $query->fetchObject()) {
+    // Use Url::fromUri() for external URLs
+          // $result->rm_project_title_name;
+$link = Link::fromTextAndUrl('Click Here', Url::fromUri($result->rm_project_link, ['attributes' => ['target' => '_blank']]))->toRenderable();
+    // $url = Url::fromUri($result->rm_project_link, ['attributes' => ['target' => '_blank']]);
+    // $link = Link::fromTextAndUrl('Click Here', $url)->toRenderable();
+
+    $preference_rows[] = [
+      $i,
+      $result->rm_project_title_name,
+      $link, // render array directly
+    ];
+    $i++;
   }
 
+  $preference_header = [
+    'No',
+    'List of available projects',
+    'Link to the paper',
+  ];
+
+  return [
+    '#type' => 'table',
+    '#header' => $preference_header,
+    '#rows' => $preference_rows,
+  ];
+}
+
+
   public function download_research_migration_project_title_files() {
-    $id = arg(3);
+    // $id = arg(3);
     $root_path = cfd_research_migration_project_titles_resource_file_path();
     $query = \Drupal::database()->select('rm_list_of_project_titles');
     $query->fields('rm_list_of_project_titles');
@@ -1053,38 +1220,91 @@ public function cfd_research_migration_completed_proposals_all() {
     ob_clean();
   }
 
+  // public function cfd_research_migration_project_files() {
+  //   // $proposal_id = arg(3);
+  //       $route_match = \Drupal::routeMatch();
+  //   $proposal_id = (int) $route_match->getParameter('proposal_id');
+   
+  //   $root_path = \Drupal::service("cfd_research_migration_global")->cfd_research_migration_path();
+  //   $query = \Drupal::database()->select('research_migration_submitted_abstracts_file');
+  //   $query->fields('research_migration_submitted_abstracts_file');
+  //   $query->condition('proposal_id', $proposal_id);
+  //   $query->condition('filetype', 'A');
+  //   $result = $query->execute();
+  //   // var_dump($root_path);die;
+  //   $cfd_research_migration_project_files = $result->fetchObject();
+  //   $query1 = \Drupal::database()->select('research_migration_proposal');
+  //   $query1->fields('research_migration_proposal');
+  //   $query1->condition('id', $proposal_id);
+  //   $result1 = $query1->execute();
+  //   $research_migration = $result1->fetchObject();
+  //   $directory_name = $research_migration->directory_name . '/';
+  //   var_dump($directory_name);die;
+  //   $abstract_file = $cfd_research_migration_project_files->filename;
+  //   // var_dump($abstract_file);die;
+  //   ob_clean();
+  //   header("Pragma: public");
+  //   header("Expires: 0");
+  //   header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+  //   header("Cache-Control: public");
+  //   header("Content-Description: File Transfer");
+  //   header("Content-Type: application/pdf");
+  //   header('Content-disposition: attachment; filename="' . $abstract_file . '"');
+  //   header("Content-Length: " . filesize($root_path . $directory_name . $abstract_file));
+  //   header("Content-Transfer-Encoding: binary");
+  //   header("Expires: 0");
+  //   header("Pragma: no-cache");
+  //   readfile($root_path . $directory_name . $abstract_file);
+  //   ob_end_flush();
+  //   ob_clean();
+  //   // var_dump($root_path . $directory_name . $abstract_file);die;
+  // }
+
   public function cfd_research_migration_project_files() {
-    $proposal_id = arg(3);
-    $root_path = cfd_research_migration_path();
-    $query = \Drupal::database()->select('research_migration_submitted_abstracts_file');
-    $query->fields('research_migration_submitted_abstracts_file');
+    $route_match = \Drupal::routeMatch();
+    $proposal_id = (int) $route_match->getParameter('proposal_id');
+
+    $root_path = \Drupal::service("cfd_research_migration_global")->cfd_research_migration_path();
+
+    // Get the abstract file
+    $query = \Drupal::database()->select('research_migration_submitted_abstracts_file', 'rmaf');
+    $query->fields('rmaf');
     $query->condition('proposal_id', $proposal_id);
     $query->condition('filetype', 'A');
     $result = $query->execute();
-    $cfd_research_migration_project_files = $result->fetchObject();
-    $query1 = \Drupal::database()->select('research_migration_proposal');
-    $query1->fields('research_migration_proposal');
+    $cfd_file = $result->fetchObject();
+
+    if (!$cfd_file) {
+        throw new \Symfony\Component\HttpKernel\Exception\NotFoundHttpException('Abstract file not found.');
+    }
+
+    // Get the directory
+    $query1 = \Drupal::database()->select('research_migration_proposal', 'rmp');
+    $query1->fields('rmp', ['directory_name']);
     $query1->condition('id', $proposal_id);
-    $result1 = $query1->execute();
-    $research_migration = $result1->fetchObject();
+    $research_migration = $query1->execute()->fetchObject();
+
+    if (!$research_migration) {
+        throw new \Symfony\Component\HttpKernel\Exception\NotFoundHttpException('Proposal not found.');
+    }
+
     $directory_name = $research_migration->directory_name . '/';
-    $abstract_file = $cfd_research_migration_project_files->filename;
-    ob_clean();
-    header("Pragma: public");
-    header("Expires: 0");
-    header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
-    header("Cache-Control: public");
-    header("Content-Description: File Transfer");
-    header("Content-Type: application/pdf");
-    header('Content-disposition: attachment; filename="' . $abstract_file . '"');
-    header("Content-Length: " . filesize($root_path . $directory_name . $abstract_file));
-    header("Content-Transfer-Encoding: binary");
-    header("Expires: 0");
-    header("Pragma: no-cache");
-    readfile($root_path . $directory_name . $abstract_file);
-    ob_end_flush();
-    ob_clean();
-  }
+    $file_path = $root_path . $directory_name . $cfd_file->filename;
+
+    if (!file_exists($file_path)) {
+        throw new \Symfony\Component\HttpKernel\Exception\NotFoundHttpException('File does not exist on server.');
+    }
+
+    // Return the file as a response
+    $response = new BinaryFileResponse($file_path);
+    $response->setContentDisposition(
+        ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+        $cfd_file->filename
+    );
+    return $response;
+}
+
+
 
   public function _list_research_migration_certificates() {
     $user = \Drupal::currentUser();

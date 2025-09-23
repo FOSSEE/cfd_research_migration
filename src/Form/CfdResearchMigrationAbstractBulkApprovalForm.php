@@ -219,7 +219,7 @@ function _research_migration_details($research_migration_proposal_id) {
   public function submitForm(array &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
     $user = \Drupal::currentUser();
     $msg = '';
-    $root_path = cfd_research_migration_path();
+    $root_path = \Drupal::service("cfd_research_migration_global")->cfd_research_migration_path();
     //var_dump($root_path);die;
     if ($form_state->get(['clicked_button', '#value']) == 'Submit') {
       if ($form_state->getValue(['research_migration_project']))
@@ -252,7 +252,7 @@ function _research_migration_details($research_migration_proposal_id) {
                 ':submitted_abstract_id' => $abstract_data->id,
               ]);
             } //$abstract_data = $abstracts_q->fetchObject()
-            drupal_set_message(t('Approved Research Migration project.'), 'status');
+            \Drupal::messenger()->addMessage($this->t('Approved Research Migration project.'), 'status');
             // email 
             $email_subject = t('[!site_name][Research Migration Project] Your uploaded Research Migration project have been approved', [
               '!site_name' => variable_get('site_name', '')
@@ -291,7 +291,7 @@ FOSSEE,IIT Bombay', [
               'Bcc' => $bcc,
             ];
             if (!drupal_mail('research_migration', 'standard', $email_to, language_default(), $params, $from, TRUE)) {
-              $msg = drupal_set_message('Error sending email message.', 'error');
+              $msg = \Drupal::messenger()->addMessage('Error sending email message.', 'error');
             } //!drupal_mail('research_migration', 'standard', $email_to, language_default(), $params, $from, TRUE)
           } //$form_state['values']['research_migration_actions'] == 1
           elseif ($form_state->getValue(['research_migration_actions']) == 2) {
@@ -315,7 +315,7 @@ FOSSEE,IIT Bombay', [
                 ':submitted_abstract_id' => $abstract_data->id,
               ]);
             } //$abstract_data = $abstracts_q->fetchObject()
-            drupal_set_message(t('Resubmit the project files'), 'status');
+            \Drupal::messenger()->addMessage(t('Resubmit the project files'), 'status');
             // email 
             $email_subject = t('[!site_name][Research Migration Project] Your uploaded Research Migration project have been marked as pending', [
               '!site_name' => variable_get('site_name', '')
@@ -353,23 +353,23 @@ FOSSEE,IIT Bombay', [
               'Bcc' => $bcc,
             ];
             if (!drupal_mail('research_migration', 'standard', $email_to, language_default(), $params, $from, TRUE)) {
-              drupal_set_message('Error sending email message.', 'error');
+              \Drupal::messenger()->addMessage('Error sending email message.', 'error');
             } //!drupal_mail('research_migration', 'standard', $email_to, language_default(), $params, $from, TRUE)
           } //$form_state['values']['research_migration_actions'] == 2
           elseif ($form_state->getValue(['research_migration_actions']) == 3) //disapprove and delete entire Research Migration project
  {
             if (strlen(trim($form_state->getValue(['message']))) <= 30) {
               $form_state->setErrorByName('message', t(''));
-              $msg = drupal_set_message("Please mention the reason for disapproval. Minimum 30 character required", 'error');
+              $msg = \Drupal::messenger()->addMessage("Please mention the reason for disapproval. Minimum 30 character required", 'error');
               return $msg;
             } //strlen(trim($form_state['values']['message'])) <= 30
             if (!user_access('Research Migration bulk delete abstract')) {
-              $msg = drupal_set_message(t('You do not have permission to Bulk Dis-Approved and Deleted Entire Lab.'), 'error');
+              $msg = \Drupal::messenger()->addMessage(t('You do not have permission to Bulk Dis-Approved and Deleted Entire Lab.'), 'error');
               return $msg;
             } //!user_access('research_migration bulk delete code')
             if (research_migration_abstract_delete_project($form_state->getValue(['research_migration_project']))) //////
  {
-              drupal_set_message(t('Dis-Approved and Deleted Entire Research Migration project.'), 'status');
+              \Drupal::messenger()->addMessage(t('Dis-Approved and Deleted Entire Research Migration project.'), 'status');
               $email_subject = t('[!site_name][Research Migration Project] Your uploaded Research Migration project have been marked as dis-approved', [
                 '!site_name' => variable_get('site_name', '')
                 ]);
@@ -405,11 +405,11 @@ FOSSEE,IIT Bombay', [
                 'Bcc' => $bcc,
               ];
               if (!drupal_mail('research_migration', 'standard', $email_to, language_default(), $params, $from, TRUE)) {
-                drupal_set_message('Error sending email message.', 'error');
+                \Drupal::messenger()->addMessage('Error sending email message.', 'error');
               }
             } //research_migration_abstract_delete_project($form_state['values']['research_migration_project'])
             else {
-              drupal_set_message(t('Error Dis-Approving and Deleting Entire Research Migration project.'), 'error');
+              \Drupal::messenger()->addMessage(t('Error Dis-Approving and Deleting Entire Research Migration project.'), 'error');
             }
             // email 
 

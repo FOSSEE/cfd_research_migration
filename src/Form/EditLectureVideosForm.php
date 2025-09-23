@@ -133,7 +133,7 @@ class EditLectureVideosForm extends FormBase {
     $this->messenger()->addStatus($this->t('Video details updated successfully.'));
 
     // Redirect back to the same edit page.
-    $form_state->setRedirectUrl(Url::fromRoute('cfd_research_migration.edit_lecture_video', [
+    $form_state->setRedirectUrl(Url::fromRoute('cfd_research_migration.edit_lecture_videos_form', [
       'video_id' => $video_id,
     ]));
   }

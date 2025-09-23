@@ -76,7 +76,7 @@ cfd_research_migration.proposal_edit_form:
   requirements:
     _permission: 'Research Migration manage proposal'
 cfd_research_migration.proposal_status_form:
-  path: /research-migration-project/manage-proposal/status/{id?}
+  path: /research-migration-project/manage-proposal/status/{proposal_id}
   defaults:
     _title: 'Proposal Status'
     _form: \Drupal\cfd_research_migration\Form\CfdResearchMigrationProposalStatusForm
@@ -117,7 +117,7 @@ cfd_research_migration.upload_code_delete:
   requirements:
     _permission: 'Research Migration upload code'
 cfd_research_migration.download_full_project:
-  path: /research-migration-project/full-download/project
+  path: /research-migration-project/full-download/project/{proposal_id}
   defaults:
     _title: 'Code Download'
     _controller: '\Drupal\cfd_research_migration\Controller\DefaultController::cfd_research_migration_download_full_project'
@@ -145,7 +145,7 @@ cfd_research_migration.list_of_available_project_titles:
   requirements:
     _permission: 'Research Migration Project titles list'
 cfd_research_migration.run_form:
-  path: /research-migration-project/research-migration-run
+  path: /research-migration-project/research-migration-run/{url_research_migration_id}
   defaults:
     _title: 'Download Codes'
     _form: \Drupal\cfd_research_migration\Form\CfdResearchMigrationRunForm
@@ -165,7 +165,7 @@ cfd_research_migration.download_research_migration_project_title_files:
   requirements:
     _permission: 'download code'
 cfd_research_migration.project_files:
-  path: /research-migration-project/download/project-file/{id?}
+  path: /research-migration-project/download/project-file/{proposal_id?}
   defaults:
     _title: 'Download Project file'
     _controller: '\Drupal\cfd_research_migration\Controller\DefaultController::cfd_research_migration_project_files'

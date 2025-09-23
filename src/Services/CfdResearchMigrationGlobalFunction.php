@@ -254,7 +254,7 @@ function default_value_for_uploaded_files($filetype, $proposal_id)
 //   return $existing_research_migration;
 // }
 
-private function _rm_list_of_research_migration() {
+public function _rm_list_of_research_migration() {
     $existing_research_migration = [];
 
     $query = "
