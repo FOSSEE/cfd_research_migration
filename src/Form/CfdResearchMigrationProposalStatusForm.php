@@ -31,7 +31,7 @@ class CfdResearchMigrationProposalStatusForm extends FormBase {
     // $proposal_id = (int) arg(3);
     $route_match = \Drupal::routeMatch();
 
-    $proposal_id = (int) $route_match->getParameter('proposal_id');
+    $proposal_id = (int) $route_match->getParameter('id');
     // var_dump($proposal_id);die;
     $query = \Drupal::database()->select('research_migration_proposal');
     $query->fields('research_migration_proposal');
@@ -285,7 +285,7 @@ class CfdResearchMigrationProposalStatusForm extends FormBase {
     // $proposal_id = (int) arg(3);
     $route_match = \Drupal::routeMatch();
 
-    $proposal_id = (int) $route_match->getParameter('proposal_id');
+    $proposal_id = (int) $route_match->getParameter('id');
     //$proposal_q = \Drupal::database()->query("SELECT * FROM {research_migration_proposal} WHERE id = %d", $proposal_id);
     $query = \Drupal::database()->select('research_migration_proposal');
     $query->fields('research_migration_proposal');
@@ -300,12 +300,13 @@ class CfdResearchMigrationProposalStatusForm extends FormBase {
         // drupal_goto('research-migration-project/manage-proposal');
         return;
       }
+
     } //$proposal_q
-    else {
-      \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
-      // drupal_goto('research-migration-project/manage-proposal');
-      return;
-    }
+    // else {
+    //   \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
+    //   // drupal_goto('research-migration-project/manage-proposal');
+    //   return;
+    // }
     /* set the book status to completed */
     if ($form_state->getValue(['completed']) == 1) {
       $up_query = "UPDATE research_migration_proposal SET approval_status = :approval_status , actual_completion_date = :expected_completion_date WHERE id = :proposal_id";
@@ -344,6 +345,10 @@ class CfdResearchMigrationProposalStatusForm extends FormBase {
       \Drupal::messenger()->addMessage('Congratulations! CFD research migration proposal has been marked as completed. User has been notified of the completion.', 'status');
     }
     // drupal_goto('research-migration-project/manage-proposal');
+
+    $form_state->setRedirectUrl(
+  Url::fromUserInput('/research-migration-project/manage-proposal/all')
+);
     return;
 
   }

@@ -76,7 +76,7 @@ cfd_research_migration.proposal_edit_form:
   requirements:
     _permission: 'Research Migration manage proposal'
 cfd_research_migration.proposal_status_form:
-  path: /research-migration-project/manage-proposal/status/{proposal_id}
+  path: /research-migration-project/manage-proposal/status/{id}
   defaults:
     _title: 'Proposal Status'
     _form: \Drupal\cfd_research_migration\Form\CfdResearchMigrationProposalStatusForm

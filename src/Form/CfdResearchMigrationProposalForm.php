@@ -384,36 +384,72 @@ $form['research_migration_fields'] = [
   '#attributes' => ['id' => 'research-migration-wrapper'],
 ];
 
-// Dropdown: only shown if Yes selected
-$list = \Drupal::service('cfd_research_migration_global')->_rm_list_of_research_migration();
-$list = $list ?? []; // <-- default to empty array if null
+// // Dropdown: only shown if Yes selected
+// $list = \Drupal::service('cfd_research_migration_global')->_rm_list_of_research_migration();
+// $list = $list ?? []; // <-- default to empty array if null
 
-$form['research_migration_fields']['cfd_research_migration_name_dropdown'] = [
-  '#type' => 'select',
-  '#title' => $this->t('Select the name of available Research Migration Project'),
-  '#required' => TRUE,
-  '#options' => $list,
-  '#states' => [
-    'visible' => [
-      ':input[name="cfd_project_title_check"]' => ['value' => '1'],
-    ],
-  ],
-];
+// $form['research_migration_fields']['cfd_research_migration_name_dropdown'] = [
+//   '#type' => 'select',
+//   '#title' => $this->t('Select the name of available Research Migration Project'),
+//   '#required' => TRUE,
+//   '#options' => $list,
+//   '#states' => [
+//     'visible' => [
+//       ':input[name="cfd_project_title_check"]' => ['value' => '1'],
+//     ],
+//   ],
+// ];
 
-// Textfield: only shown if No selected or no list
-$form['research_migration_fields']['project_title'] = [
-  '#type' => 'textfield',
-  '#title' => $this->t('Title of the Research Migration Project'),
-  '#size' => 80,
-  '#maxlength' => 250,
-  '#description' => $this->t('Maximum character limit is 250'),
-  '#required' => TRUE,
-  '#states' => [
-    'visible' => [
-      ':input[name="cfd_project_title_check"]' => ['value' => '0'],
-    ],
-  ],
-];
+// // Textfield: only shown if No selected or no list
+// $form['research_migration_fields']['project_title'] = [
+//   '#type' => 'textfield',
+//   '#title' => $this->t('Title of the Research Migration Project'),
+//   '#size' => 80,
+//   '#maxlength' => 250,
+//   '#description' => $this->t('Maximum character limit is 250'),
+//   '#required' => TRUE,
+//   '#states' => [
+//     'visible' => [
+//       ':input[name="cfd_project_title_check"]' => ['value' => '0'],
+//     ],
+//   ],
+// ];
+
+// Decide what to show inside the container
+$selected = $form_state->getValue('cfd_project_title_check');
+
+// Case 1: YES selected, and list is not empty → show dropdown
+if ($selected === '1' && !empty($list)) {
+  $form['research_migration_fields']['cfd_research_migration_name_dropdown'] = [
+    '#type' => 'select',
+    '#title' => $this->t('Select the name of available Research Migration Project'),
+    '#options' => $list,
+    '#empty_option' => $this->t('- Select -'),
+    '#required' => TRUE,
+  ];
+}
+// Case 2: YES selected, but list is empty → fallback to textfield
+elseif ($selected === '1' && empty($list)) {
+  $form['research_migration_fields']['project_title'] = [
+    '#type' => 'textfield',
+    '#title' => $this->t('Title of the Research Migration Project'),
+    '#size' => 80,
+    '#maxlength' => 250,
+    '#required' => TRUE,
+  ];
+}
+// Case 3: NO selected → always textfield
+elseif ($selected === '0') {
+  $form['research_migration_fields']['project_title'] = [
+    '#type' => 'textfield',
+    '#title' => $this->t('Title of the new Research Migration Project'),
+    '#size' => 80,
+    '#maxlength' => 250,
+    '#required' => TRUE,
+  ];
+}
+
+
  $form['source_of_the_project'] = array(
   '#type' => 'textfield',
   '#title' => t('Source of the Project'),
@@ -443,44 +479,7 @@ $form['research_migration_fields']['project_title'] = [
   ),
   );
 
-  // $simulation_id = isset($form_state['values']['simulation_type']) ? $form_state['values']['simulation_type'] : key($simulation_type_options);
-  // if($simulation_id < 19){
-  // $form['solver_used'] = array(
-  // '#type' => 'select',
-  // '#title' => t('Select the Solver to be used'),
-  // '#options' => \Drupal::service("cfd_research_migration_global")->_rm_list_of_solvers($simulation_id),
-  // '#default_value' => 0,
-  // '#prefix' => '<div id="ajax-solver-replace">',
-  // '#suffix' => '</div>',
-  // '#states' => array(
-  // 'invisible' => array(
-  // ':input[name="simulation_type"]' => array(
-  // 'value' => 19
-  // )
-  // )
-  // ),
-  // '#required' => TRUE
-  // );
-  // }
-  // //else if ($simulation_id == 19){
-  // $form['solver_used_text'] = array(
-  // '#type' => 'textfield',
-  // '#title' => t('Enter the Solver to be used'),
-  // '#size' => 100,
-  // '#description' => t('Maximum character limit is 50'),
-  // //'#required' => TRUE,
-  // '#prefix' => '<div id="ajax-solver-text-replace">',
-  // '#suffix' => '</div>',
-  // '#states' => array(
-  // 'visible' => array(
-  // ':input[name="simulation_type"]' => array(
-  // 'value' => 19
-  // )
-  // )
-  // ),
-  // );
-  // }
-  
+
   $simulation_id = $form_state->hasValue('simulation_type') ? $form_state->getValue('simulation_type') : key($simulation_type_options);
   
   if ($simulation_id < 19) {
@@ -976,10 +975,10 @@ function ajax_solver_used_callback(array &$form, FormStateInterface $form_state)
         }
       } //$file_name
     } //$_FILES['files']['name'] as $file_form_name => $file_name
-    if (!$result1) {
-      \Drupal::messenger()->addMessage(t('Error receiving your proposal. Please try again.'), 'error');
-      return;
-    } //!$proposal_id
+     if (!$result1) {
+    \Drupal::messenger()->addMessage(t('Error receiving your proposal. Please try again.'), 'error');
+    return;
+  } //!$proposal_id
 	/* sending email */
     // $email_to = $user->mail;
     // $form = variable_get('research_migration_from_email', '');
@@ -999,16 +998,24 @@ function ajax_solver_used_callback(array &$form, FormStateInterface $form_state)
     // if (!drupal_mail('research_migration', 'research_migration_proposal_received', $email_to, user_preferred_language($user), $params, $form, TRUE)) {
     //   \Drupal::messenger()->addMessage('Error sending email message.', 'error');
     // }
-    \Drupal::messenger()->addMessage(t('We have received your Research Migration proposal. We will get back to you soon.'), 'status');
-    // drupal_goto('');
-    $response = new RedirectResponse(Url::fromRoute('<front>')->toString());
+    // \Drupal::messenger()->addMessage(t('We have received your Research Migration proposal. We will get back to you soon.'), 'status');
+    // // drupal_goto('');
+    // $response = new RedirectResponse(Url::fromRoute('<front>')->toString());
   
-    // Send the redirect response
-      $response->send();
-      }
-    }
-  
+     
 
+  \Drupal::messenger()->addMessage(t('We have received your Research Migration proposal. We will get back to you soon.'), 'status');
+
+  // Redirect properly
+  $form_state->setRedirect('<front>');
+
+
+
+    // Send the redirect response
+      }
+    
+  
+    }
 
 ?>
 	
