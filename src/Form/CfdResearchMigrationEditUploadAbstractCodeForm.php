@@ -16,7 +16,7 @@ use Drupal\Core\Url;
 use Drupal\Core\Link;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal\r_case_study\Form\stdClass;
-
+use Drupal\Core\Database\Database;
 
 class CfdResearchMigrationEditUploadAbstractCodeForm extends FormBase {
 
@@ -69,7 +69,7 @@ class CfdResearchMigrationEditUploadAbstractCodeForm extends FormBase {
       '#markup' => $proposal_data->contributor_name,
       '#title' => t('Contributor Name'),
     ];
-    $existing_uploaded_A_file = default_value_for_uploaded_files("A", $proposal_data->id);
+    $existing_uploaded_A_file =   \Drupal::service("cfd_research_migration_global")->default_value_for_uploaded_files("A", $proposal_data->id);
     if (!$existing_uploaded_A_file) {
       $existing_uploaded_A_file = new stdClass();
       $existing_uploaded_A_file->filename = "No file uploaded";
@@ -78,9 +78,9 @@ class CfdResearchMigrationEditUploadAbstractCodeForm extends FormBase {
       '#type' => 'file',
       '#title' => t('Upload the Synopsis'),
       //'#required' => TRUE,
-        '#description' => t('<span style="color:red;">Current File :</span> ' . $existing_uploaded_A_file->filename . '<br />Separate filenames with underscore. No spaces or any special characters allowed in filename.') . '<br />' . t('<span style="color:red;">Allowed file extensions : ') . variable_get('resource_upload_extensions', '') . '</span>',
+        '#description' => t('<span style="color:red;">Current File :</span> ' . $existing_uploaded_A_file->filename . '<br />Separate filenames with underscore. No spaces or any special characters allowed in filename.') . '<br />' . t('<span style="color:red;">Allowed file extensions : ') . \Drupal::config('cfd_research_migration.settings')->get('resource_upload_extensions', '') . '</span>',
     ];
-    $existing_uploaded_S_file = default_value_for_uploaded_files("S", $proposal_data->id);
+    $existing_uploaded_S_file =   \Drupal::service("cfd_research_migration_global")->default_value_for_uploaded_files("S", $proposal_data->id);
     if (!$existing_uploaded_S_file) {
       $existing_uploaded_S_file = new stdClass();
       $existing_uploaded_S_file->filename = "No file uploaded";
@@ -89,22 +89,25 @@ class CfdResearchMigrationEditUploadAbstractCodeForm extends FormBase {
       '#type' => 'file',
       '#title' => t('Upload the Case Directory'),
       //'#required' => TRUE,
-        '#description' => t('<span style="color:red;">Current File :</span> ' . $existing_uploaded_S_file->filename . '<br />Separate filenames with underscore. No spaces or any special characters allowed in filename.') . '<br />' . t('<span style="color:red;">Allowed file extensions : ') . variable_get('research_migration_project_files_extensions', '') . '</span>',
+        '#description' => t('<span style="color:red;">Current File :</span> ' . $existing_uploaded_S_file->filename . '<br />Separate filenames with underscore. No spaces or any special characters allowed in filename.') . '<br />' . t('<span style="color:red;">Allowed file extensions : ') . \Drupal::config('cfd_research_migration.settings')->get('research_migration_project_files_extensions', '') . '</span>',
     ];
     $form['prop_id'] = [
       '#type' => 'hidden',
       '#value' => $proposal_data->id,
     ];
-    $form['submit'] = [
-      '#type' => 'submit',
-      '#value' => t('Submit'),
-      '#submit' => [
-        'cfd_research_migration_edit_upload_abstract_code_form_submit'
-        ],
-    ];
+   $form['submit'] = [
+  '#type' => 'submit',
+  '#value' => $this->t('Submit'),
+];
+              
+    
     $form['cancel'] = [
       '#type' => 'item',
       // '#markup' => l(t('Cancel'), 'research-migration-project/manage-proposal/edit-upload-file'),
+      '#markup' => Link::fromTextAndUrl(
+  $this->t('Cancel'),
+Url::fromUserInput('/research-migration-project/abstract-code/edit-upload-files'))->toString(),
+
     ];
     return $form;
   }
@@ -135,10 +138,10 @@ class CfdResearchMigrationEditUploadAbstractCodeForm extends FormBase {
           $allowed_extensions_str = '';
           switch ($file_type) {
             case 'A':
-              $allowed_extensions_str = variable_get('resource_upload_extensions', '');
+              $allowed_extensions_str = \Drupal::config('cfd_research_migration.settings')->get('resource_upload_extensions', '');
               break;
             case 'S':
-              $allowed_extensions_str = variable_get('research_migration_project_files_extensions', '');
+              $allowed_extensions_str = \Drupal::config('cfd_research_migration.settings')->get('research_migration_project_files_extensions', '');
               break;
           } //$file_type
                 /* checking file type */
@@ -171,7 +174,7 @@ class CfdResearchMigrationEditUploadAbstractCodeForm extends FormBase {
   public function submitForm(array &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
     $user = \Drupal::currentUser();
     $v = $form_state->getValues();
-    $root_path = cfd_research_migration_path();
+    $root_path = \Drupal::service("cfd_research_migration_global")->cfd_research_migration_path();
     $query = \Drupal::database()->select('research_migration_proposal');
     $query->fields('research_migration_proposal');
     $query->condition('id', $v['prop_id']);
@@ -258,6 +261,10 @@ class CfdResearchMigrationEditUploadAbstractCodeForm extends FormBase {
     //   \Drupal::messenger()->addMessage('Error sending email message.', 'error');
     // }
     // drupal_goto('research  -migration-project/abstract-code/edit-upload-files');
+$form_state->setRedirect(
+  'cfd_research_migration.edit_upload_abstract_code_form',
+  ['proposal_id' => $v['prop_id']]
+);
   }
 
 }

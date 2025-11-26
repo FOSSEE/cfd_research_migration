@@ -214,7 +214,7 @@ public function cfd_research_migration_get_proposal() {
 }
 
 
-function default_value_for_uploaded_files($filetype, $proposal_id)
+public function default_value_for_uploaded_files($filetype, $proposal_id)
 {
     $database = Database::getConnection();
     $query = $database->select('research_migration_submitted_abstracts_file', 'rmsaf')
