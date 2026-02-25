@@ -367,26 +367,44 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
     /* delete proposal */
     if ($form_state->getValue(['delete_proposal']) == 1) {
       /* sending email */
-      // $user_data = user_load($proposal_data->uid);
-      // $email_to = $user_data->mail;
-      // $from = variable_get('research_migration_from_email', '');
-      // $bcc = variable_get('research_migration_emails', '');
-      // $cc = variable_get('research_migration_cc_emails', '');
-      // $params['research_migration_proposal_deleted']['proposal_id'] = $proposal_id;
-      // $params['research_migration_proposal_deleted']['user_id'] = $proposal_data->uid;
-      // $params['research_migration_proposal_deleted']['headers'] = [
-      //   'From' => $from,
-      //   'MIME-Version' => '1.0',
-      //   'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
-      //   'Content-Transfer-Encoding' => '8Bit',
-      //   'X-Mailer' => 'Drupal',
-      //   'Cc' => $cc,
-      //   'Bcc' => $bcc,
-      // ];
-      // if (!drupal_mail('research_migration', 'research_migration_proposal_deleted', $email_to, user_preferred_language($user), $params, $from, TRUE)) {
-      //   \Drupal::messenger()->addMessage('Error sending email message.', 'error');
-      // }
+$user_data = User::load($proposal_data->uid);
 
+if ($user_data && $user_data->getEmail()) {
+
+  $email_to = $user_data->getEmail();
+
+  $config = \Drupal::config('research_migration.settings');
+
+  $from = $config->get('research_migration_from_email');
+  $bcc  = $config->get('research_migration_emails');
+  $cc   = $config->get('research_migration_cc_emails');
+
+  $params['research_migration_proposal_deleted']['proposal_id'] = $proposal_id;
+  $params['research_migration_proposal_deleted']['user_id'] = $proposal_data->uid;
+
+  $params['research_migration_proposal_deleted']['headers'] = [
+    'From' => $from,
+    'Cc'   => $cc,
+    'Bcc'  => $bcc,
+  ];
+
+  /** @var MailManagerInterface $mail_manager */
+  $mail_manager = \Drupal::service('plugin.manager.mail');
+
+  $result = $mail_manager->mail(
+    'research_migration',
+    'research_migration_proposal_deleted',
+    $email_to,
+    $user_data->getPreferredLangcode(),
+    $params,
+    $from,
+    TRUE
+  );
+
+  if (!$result['result']) {
+    \Drupal::messenger()->addMessage(t(' Sending email message.'));
+  }
+}
       \Drupal::messenger()->addMessage(t('research migration proposal has been deleted.'), 'status');
       if (_rm_rrmdir_project($proposal_id) == TRUE) {
         $query = db_delete('research_migration_proposal');

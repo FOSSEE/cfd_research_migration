@@ -214,6 +214,33 @@ public function cfd_research_migration_get_proposal() {
 }
 
 
+public function cfd_research_migration_check_valid_filename($file_name) {
+  if (!preg_match('/^[0-9a-zA-Z\._]+$/', $file_name)) {
+    return FALSE;
+  }
+  elseif (substr_count($file_name, '.') > 1) {
+    return FALSE;
+  }
+  else {
+    return TRUE;
+  }
+}
+public function _rm_list_of_versions() {
+  $versions = [];
+
+  $database = Database::getConnection();
+  $query = $database->select('research_migration_software_version', 'r');
+  $query->fields('r');
+
+  $version_list = $query->execute();
+
+  foreach ($version_list as $version_data) {
+    $versions[$version_data->id] = $version_data->research_migration_version;
+  }
+
+  return $versions;
+}
+
 public function default_value_for_uploaded_files($filetype, $proposal_id)
 {
     $database = Database::getConnection();
@@ -253,6 +280,53 @@ public function default_value_for_uploaded_files($filetype, $proposal_id)
 
 //   return $existing_research_migration;
 // }
+
+
+/**
+ * Creates README.txt file for a Research Migration Project.
+ */
+public function CreateReadmeFileResearchMigrationProject($proposal_id) {
+  $database = Database::getConnection();
+
+  $query = $database->select('research_migration_proposal', 'r')
+    ->fields('r')
+    ->condition('id', $proposal_id)
+    ->range(0, 1);
+
+  $proposal_data = $query->execute()->fetchObject();
+
+  if (!$proposal_data) {
+    \Drupal::logger('cfd_research_migration')->error('Invalid proposal ID: @id', [
+      '@id' => $proposal_id,
+    ]);
+    return FALSE;
+  }
+
+  $root_path = $this->cfd_research_migration_path();
+  $directory = $root_path . $proposal_data->directory_name;
+
+  /** @var \Drupal\Core\File\FileSystemInterface $file_system */
+  $file_system = \Drupal::service('file_system');
+
+  // Ensure directory exists.
+  $file_system->prepareDirectory(
+    $directory,
+    FileSystemInterface::CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS
+  );
+
+  $file_path = $directory . '/README.txt';
+
+  $txt  = "About the Research Migration\n\n";
+  $txt .= "Title Of The Research Migration Project: " . $proposal_data->project_title . "\n";
+  $txt .= "Proposer Name: " . $proposal_data->name_title . " " . $proposal_data->contributor_name . "\n";
+  $txt .= "University: " . $proposal_data->university . "\n\n";
+  $txt .= "Research Migration Project By FOSSEE, IIT Bombay\n";
+
+  // Write file using Drupal file API.
+  $file_system->saveData($txt, $file_path, FileSystemInterface::EXISTS_REPLACE);
+
+  return $txt;
+}
 
 public function _rm_list_of_research_migration() {
     $existing_research_migration = [];

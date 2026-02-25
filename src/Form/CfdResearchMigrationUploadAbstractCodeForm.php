@@ -179,7 +179,7 @@ $proposal_data = $query;
           }
 
           /* check if valid file name */
-          if (!cfd_research_migration_check_valid_filename($_FILES['files']['name'][$file_form_name])) {
+          if (!\Drupal::service("cfd_research_migration_global")->cfd_research_migration_check_valid_filename($_FILES['files']['name'][$file_form_name])) {
             $form_state->setErrorByName($file_form_name, t('Invalid file name specified. Only alphabets and numbers are allowed as a valid filename.'));
           }
 
@@ -338,27 +338,64 @@ $proposal_data = $query;
       } //$file_name
     } //$_FILES['files']['name'] as $file_form_name => $file_name
     /* sending email */
-    // $email_to = $user->mail;
-    // $from = variable_get('research_migration_from_email', '');
-    // $bcc = variable_get('research_migration_emails', '');
-    // $cc = variable_get('research_migration_cc_emails', '');
-    // $params['abstract_uploaded']['proposal_id'] = $proposal_id;
-    // $params['abstract_uploaded']['submitted_abstract_id'] = $submitted_abstract_id;
-    // $params['abstract_uploaded']['user_id'] = $user->uid;
-    // $params['abstract_uploaded']['headers'] = [
-    //   'From' => $from,
-    //   'MIME-Version' => '1.0',
-    //   'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
-    //   'Content-Transfer-Encoding' => '8Bit',
-    //   'X-Mailer' => 'Drupal',
-    //   'Cc' => $cc,
-    //   'Bcc' => $bcc,
-    // ];
-    // if (!drupal_mail('research_migration', 'abstract_uploaded', $email_to, language_default(), $params, $from, TRUE)) {
-    //   \Drupal::messenger()->addMessage('Error sending email message.', 'error');
-    // }
 
-    // drupal_goto('research-migration-project/abstract-code');
+// Email to user
+$email_to = $user->getEmail();
+
+// Load config
+$config = \Drupal::config('research_migration.settings');
+
+$from_email = $config->get('research_migration_from_email');
+$bcc        = $config->get('research_migration_emails');
+$cc         = $config->get('research_migration_cc_emails');
+
+// Fallback safety (prevents Symfony null error)
+$site_mail  = \Drupal::config('system.site')->get('mail');
+
+$from_email = !empty($from_email) ? $from_email : $site_mail;
+$cc         = !empty($cc) ? $cc : '';
+$bcc        = !empty($bcc) ? $bcc : '';
+
+// Params
+$params['abstract_uploaded']['proposal_id'] = $proposal_id;
+$params['abstract_uploaded']['submitted_abstract_id'] = $submitted_abstract_id;
+$params['abstract_uploaded']['user_id'] = $user->id();
+
+// Build headers safely
+$headers = [
+  'From' => $from_email,
+  'MIME-Version' => '1.0',
+  'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
+  'Content-Transfer-Encoding' => '8Bit',
+  'X-Mailer' => 'Drupal',
+];
+
+if (!empty($cc)) {
+  $headers['Cc'] = $cc;
+}
+
+if (!empty($bcc)) {
+  $headers['Bcc'] = $bcc;
+}
+
+$params['abstract_uploaded']['headers'] = $headers;
+
+// Send mail
+$mail_manager = \Drupal::service('plugin.manager.mail');
+
+$result = $mail_manager->mail(
+  'research_migration',
+  'abstract_uploaded',
+  $email_to,
+  \Drupal::languageManager()->getDefaultLanguage()->getId(),
+  $params,
+  $from_email,
+  TRUE
+);
+
+if (!$result['result']) {
+  \Drupal::messenger()->addError(t('Error sending email message.'));
+}
     $response = new RedirectResponse(Url::fromUri('internal:/research-migration-project/abstract-code')->toString());
 $response->send();
 
