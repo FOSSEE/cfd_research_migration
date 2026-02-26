@@ -254,46 +254,71 @@ function _research_migration_details($research_migration_proposal_id) {
             } //$abstract_data = $abstracts_q->fetchObject()
             \Drupal::messenger()->addMessage($this->t('Approved Research Migration project.'), 'status');
             // email 
-            $email_subject = t('[!site_name][Research Migration Project] Your uploaded Research Migration project have been approved', [
-              '!site_name' => variable_get('site_name', '')
-              ]);
-            $email_body = [
-              0 => t('
 
-Dear !user_name,
+/** Prepare subject */
+$email_subject = t('[@site][Research Migration Project] Your uploaded Research Migration project has been approved', [
+  '@site' => \Drupal::config('system.site')->get('name'),
+]);
 
-Your uploaded project files for the Research Migration project has been approved.
+/** Prepare body */
+$email_body = t('
+Dear @user_name,
 
-Title of Research Migration project  : ' . $user_info->project_title . '
+Your uploaded project files for the Research Migration project have been approved.
+
+Title of Research Migration project : @title
 
 Best Wishes,
 
-!site_name Team,
-FOSSEE,IIT Bombay', [
-                '!site_name' => variable_get('site_name', ''),
-                '!user_name' => $user_data->name,
-              ])
-              ];
-            /** sending email when everything done **/
-            $email_to = $user_data->mail;
-            $from = variable_get('research_migration_from_email', '');
-            $bcc = variable_get('research_migration_emails', '');
-            $cc = variable_get('research_migration_cc_emails', '');
-            $params['standard']['subject'] = $email_subject;
-            $params['standard']['body'] = $email_body;
-            $params['standard']['headers'] = [
-              'From' => $from,
-              'MIME-Version' => '1.0',
-              'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
-              'Content-Transfer-Encoding' => '8Bit',
-              'X-Mailer' => 'Drupal',
-              'Cc' => $cc,
-              'Bcc' => $bcc,
-            ];
-            if (!drupal_mail('research_migration', 'standard', $email_to, language_default(), $params, $from, TRUE)) {
-              $msg = \Drupal::messenger()->addMessage('Error sending email message.', 'error');
-            } //!drupal_mail('research_migration', 'standard', $email_to, language_default(), $params, $from, TRUE)
-          } //$form_state['values']['research_migration_actions'] == 1
+@site Team,
+FOSSEE, IIT Bombay
+', [
+  '@site' => \Drupal::config('system.site')->get('name'),
+  '@user_name' => $user_data->getDisplayName(),
+  '@title' => $user_info->project_title,
+]);
+
+/** Mail parameters */
+$params = [];
+$params['subject'] = $email_subject;
+$params['body'] = $email_body;
+
+/** Recipients */
+$email_to = $user_data->getEmail();
+$from = \Drupal::config('research_migration.settings')->get('research_migration_from_email');
+$cc = \Drupal::config('research_migration.settings')->get('research_migration_cc_emails');
+$bcc = \Drupal::config('research_migration.settings')->get('research_migration_emails');
+
+$params['headers'] = [
+  'From' => $from,
+  'Cc' => $cc,
+  'Bcc' => $bcc,
+  'MIME-Version' => '1.0',
+  'Content-Type' => 'text/plain; charset=UTF-8',
+  'Content-Transfer-Encoding' => '8Bit',
+  'X-Mailer' => 'Drupal',
+];
+
+/** Send mail */
+$mail_manager = \Drupal::service('plugin.manager.mail');
+$langcode = \Drupal::currentUser()->getPreferredLangcode();
+
+$result = $mail_manager->mail(
+  'research_migration',
+  'standard',
+  $email_to,
+  $langcode,
+  $params,
+  $from,
+  TRUE
+);
+
+if (!$result['result']) {
+  \Drupal::messenger()->addError(t('Error sending email message.'));
+}
+else {
+  \Drupal::messenger()->addStatus(t('Approval email sent successfully.'));
+}          } //$form_state['values']['research_migration_actions'] == 1
           elseif ($form_state->getValue(['research_migration_actions']) == 2) {
             //pending review entire project 
             $query = \Drupal::database()->select('research_migration_submitted_abstracts');
@@ -317,45 +342,72 @@ FOSSEE,IIT Bombay', [
             } //$abstract_data = $abstracts_q->fetchObject()
             \Drupal::messenger()->addMessage(t('Resubmit the project files'), 'status');
             // email 
-            $email_subject = t('[!site_name][Research Migration Project] Your uploaded Research Migration project have been marked as pending', [
-              '!site_name' => variable_get('site_name', '')
-              ]);
-            $email_body = [
-              0 => t('
 
-Dear !user_name,
+/** Prepare subject */
+$email_subject = t('[@site][Research Migration Project] Your uploaded Research Migration project has been marked as pending', [
+  '@site' => \Drupal::config('system.site')->get('name'),
+]);
 
-Kindly resubmit the project files for the project : ' . $user_info->project_title . '.
- 
+/** Prepare body */
+$email_body = t('
+Dear @user_name,
+
+Kindly resubmit the project files for the project : @title.
 
 Best Wishes,
 
-!site_name Team,
-FOSSEE,IIT Bombay', [
-                '!site_name' => variable_get('site_name', ''),
-                '!user_name' => $user_data->name,
-              ])
-              ];
-            /** sending email when everything done **/
-            $email_to = $user_data->mail;
-            $from = variable_get('research_migration_from_email', '');
-            $bcc = variable_get('research_migration_emails', '');
-            $cc = variable_get('research_migration_cc_emails', '');
-            $params['standard']['subject'] = $email_subject;
-            $params['standard']['body'] = $email_body;
-            $params['standard']['headers'] = [
-              'From' => $from,
-              'MIME-Version' => '1.0',
-              'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
-              'Content-Transfer-Encoding' => '8Bit',
-              'X-Mailer' => 'Drupal',
-              'Cc' => $cc,
-              'Bcc' => $bcc,
-            ];
-            if (!drupal_mail('research_migration', 'standard', $email_to, language_default(), $params, $from, TRUE)) {
-              \Drupal::messenger()->addMessage('Error sending email message.', 'error');
-            } //!drupal_mail('research_migration', 'standard', $email_to, language_default(), $params, $from, TRUE)
+@site_name Team,
+FOSSEE, IIT Bombay
+', [
+  '@site_name' => \Drupal::config('system.site')->get('name'),
+  '@user_name' => $user_data->getDisplayName(),
+  '@title' => $user_info->project_title,
+]);
+
+/** Mail params */
+$params = [];
+$params['subject'] = $email_subject;
+$params['body'] = $email_body;
+
+/** Recipients */
+$email_to = $user_data->getEmail();
+$from = \Drupal::config('research_migration.settings')->get('research_migration_from_email');
+$cc   = \Drupal::config('research_migration.settings')->get('research_migration_cc_emails');
+$bcc  = \Drupal::config('research_migration.settings')->get('research_migration_emails');
+
+$params['headers'] = [
+  'From' => $from,
+  'Cc' => $cc,
+  'Bcc' => $bcc,
+  'MIME-Version' => '1.0',
+  'Content-Type' => 'text/plain; charset=UTF-8',
+  'Content-Transfer-Encoding' => '8Bit',
+  'X-Mailer' => 'Drupal',
+];
+
+/** Send mail */
+$mail_manager = \Drupal::service('plugin.manager.mail');
+$langcode = \Drupal::currentUser()->getPreferredLangcode();
+
+$result = $mail_manager->mail(
+  'research_migration',
+  'standard',
+  $email_to,
+  $langcode,
+  $params,
+  $from,
+  TRUE
+);
+
+if (!$result['result']) {
+  \Drupal::messenger()->addError(t('Error sending email message.'));
+}
+else {
+  \Drupal::messenger()->addStatus(t('Pending status email sent successfully.'));
+} //!drupal_mail('research_migration', 'standard', $email_to, language_default(), $params, $from, TRUE)
           } //$form_state['values']['research_migration_actions'] == 2
+          
+          
           elseif ($form_state->getValue(['research_migration_actions']) == 3) //disapprove and delete entire Research Migration project
  {
             if (strlen(trim($form_state->getValue(['message']))) <= 30) {
@@ -370,56 +422,75 @@ FOSSEE,IIT Bombay', [
             if (research_migration_abstract_delete_project($form_state->getValue(['research_migration_project']))) //////
  {
               \Drupal::messenger()->addMessage(t('Dis-Approved and Deleted Entire Research Migration project.'), 'status');
-              $email_subject = t('[!site_name][Research Migration Project] Your uploaded Research Migration project have been marked as dis-approved', [
-                '!site_name' => variable_get('site_name', '')
-                ]);
-              $email_body = [
-                0 => t('
-Dear !user_name,
 
-Your uploaded Research Migration project files for the Research Migration project Title : ' . $user_info->project_title . ' have been marked as dis-approved.
+/** Prepare subject */
+$email_subject = t('[!site_name][Research Migration Project] Your uploaded Research Migration project has been marked as dis-approved', [
+  '!site_name' => \Drupal::config('system.site')->get('name'),
+]);
 
-Reason for dis-approval: ' . $form_state->getValue(['message']) . '
+/** Prepare body */
+$email_body = t('
+Dear @user_name,
+
+Your uploaded Research Migration project files for the Research Migration project
+Title : @title have been marked as dis-approved.
+
+Reason for dis-approval: @reason
 
 Best Wishes,
 
-!site_name Team,
-FOSSEE,IIT Bombay', [
-                  '!site_name' => variable_get('site_name', ''),
-                  '!user_name' => $user_data->name,
-                ])
-                ];
-              $email_to = $user_data->mail;
-              $from = variable_get('research_migration_from_email', '');
-              $bcc = variable_get('research_migration_emails', '');
-              $cc = variable_get('research_migration_cc_emails', '');
-              $params['standard']['subject'] = $email_subject;
-              $params['standard']['body'] = $email_body;
-              $params['standard']['headers'] = [
-                'From' => $from,
-                'MIME-Version' => '1.0',
-                'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
-                'Content-Transfer-Encoding' => '8Bit',
-                'X-Mailer' => 'Drupal',
-                'Cc' => $cc,
-                'Bcc' => $bcc,
-              ];
-              if (!drupal_mail('research_migration', 'standard', $email_to, language_default(), $params, $from, TRUE)) {
-                \Drupal::messenger()->addMessage('Error sending email message.', 'error');
-              }
-            } //research_migration_abstract_delete_project($form_state['values']['research_migration_project'])
-            else {
-              \Drupal::messenger()->addMessage(t('Error Dis-Approving and Deleting Entire Research Migration project.'), 'error');
-            }
-            // email 
+@site_name Team,
+FOSSEE, IIT Bombay
+', [
+  '@site_name' => \Drupal::config('system.site')->get('name'),
+  '@user_name' => $user_data->getDisplayName(),
+  '@title' => $user_info->project_title,
+  '@reason' => $form_state->getValue('message'),
+]);
 
-          } //$form_state['values']['research_migration_actions'] == 3
+/** Recipients */
+$email_to = $user_data->getEmail();
+$from = \Drupal::config('research_migration.settings')->get('research_migration_from_email');
+$cc   = \Drupal::config('research_migration.settings')->get('research_migration_cc_emails');
+$bcc  = \Drupal::config('research_migration.settings')->get('research_migration_emails');
 
-        }
-      } //user_access('research_migration project bulk manage code')
-      return $msg;
-    } //$form_state['clicked_button']['#value'] == 'Submit'
-  }
+/** Mail params */
+$params = [];
+$params['subject'] = $email_subject;
+$params['body'] = $email_body;
+$params['headers'] = [
+  'From' => $from,
+  'Cc' => $cc,
+  'Bcc' => $bcc,
+  'MIME-Version' => '1.0',
+  'Content-Type' => 'text/plain; charset=UTF-8',
+  'Content-Transfer-Encoding' => '8Bit',
+  'X-Mailer' => 'Drupal',
+];
 
+/** Send mail */
+$mail_manager = \Drupal::service('plugin.manager.mail');
+$langcode = \Drupal::currentUser()->getPreferredLangcode();
+
+$result = $mail_manager->mail(
+  'research_migration',
+  'standard',
+  $email_to,
+  $langcode,
+  $params,
+  $from,
+  TRUE
+);
+
+if (!$result['result']) {
+  \Drupal::messenger()->addError(t('Error sending email message.'));
+}
+else {
+  \Drupal::messenger()->addStatus(t('Dis-approval email sent successfully.'));
+}
+ }
+ }
+        }}
+    }}
 }
 ?>

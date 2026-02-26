@@ -90,7 +90,7 @@ cfd_research_migration.abstract_bulk_approval_form:
   requirements:
     _permission: 'Research Migration bulk manage abstract'
 cfd_research_migration.edit_upload_abstract_code_form:
-  path: /research-migration-project/abstract-code/edit-upload-files/{id}
+  path: /research-migration-project/abstract-code/edit-upload-files/{proposal_id}
   defaults:
     _title: 'Research Migration Project Directory edit uploaded files for proposal'
     _form: \Drupal\cfd_research_migration\Form\CfdResearchMigrationEditUploadAbstractCodeForm

@@ -329,21 +329,37 @@ if ($user_data && $user_data->getEmail()) {
   $email_to = $user_data->getEmail();
 
   $config = \Drupal::config('research_migration.settings');
+  $site_mail = \Drupal::config('system.site')->get('mail');
 
-  $from = $config->get('research_migration_from_email');
-  $bcc  = trim($user->getEmail() . ', ' . $config->get('research_migration_emails'), ', ');
-  $cc   = $config->get('research_migration_cc_emails');
+  // SAFETY: Never allow NULL email headers
+  $from = $config->get('research_migration_from_email') ?: $site_mail;
+  $cc   = $config->get('research_migration_cc_emails') ?: '';
+  $extra_bcc = $config->get('research_migration_emails') ?: '';
+
+  // Build safe BCC list
+  $bcc_list = array_filter([
+    \Drupal::currentUser()->getEmail(),
+    $extra_bcc,
+  ]);
+
+  $bcc = implode(', ', $bcc_list);
 
   $params['research_migration_proposal_completed']['proposal_id'] = $proposal_id;
   $params['research_migration_proposal_completed']['user_id'] = $proposal_data->uid;
 
   $params['research_migration_proposal_completed']['headers'] = [
     'From' => $from,
-    'Cc' => $cc,
-    'Bcc' => $bcc,
   ];
 
-  /** @var MailManagerInterface $mail_manager */
+  if (!empty($cc)) {
+    $params['research_migration_proposal_completed']['headers']['Cc'] = $cc;
+  }
+
+  if (!empty($bcc)) {
+    $params['research_migration_proposal_completed']['headers']['Bcc'] = $bcc;
+  }
+
+  /** @var \Drupal\Core\Mail\MailManagerInterface $mail_manager */
   $mail_manager = \Drupal::service('plugin.manager.mail');
 
   $result = $mail_manager->mail(
@@ -357,9 +373,9 @@ if ($user_data && $user_data->getEmail()) {
   );
 
   if (!$result['result']) {
-    \Drupal::messenger()->addMessage(t('Sending email message.'));
+    \Drupal::messenger()->addError(t('Error sending email message.'));
   }
-}
+} 
       \Drupal::messenger()->addMessage('Congratulations! CFD research migration proposal has been marked as completed. User has been notified of the completion.', 'status');
     }
     // drupal_goto('research-migration-project/manage-proposal');

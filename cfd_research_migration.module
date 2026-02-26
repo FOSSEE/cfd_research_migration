@@ -466,17 +466,14 @@ case 'research_migration_proposal_deleted':
 
   break;
 
-  case 'standard':
 
-  $message['subject'] = $params['standard']['subject'] ?? '';
-
-  // Body must be an array of strings in Drupal 10.
-  $message['body'][] = is_array($params['standard']['body'])
-    ? implode("\n", $params['standard']['body'])
-    : ($params['standard']['body'] ?? '');
-
-  $message['headers'] = $params['standard']['headers'] ?? [];
-
-  break;
+    case 'standard':
+      $message['subject'] = $params['subject'];
+      $message['body'][] = $params['body'];
+      if (!empty($params['headers'])) {
+        $message['headers'] = $params['headers'];
+      }
+      break;
+  }
 }
-}
+  
