@@ -339,26 +339,71 @@ else {
       ];
       \Drupal::database()->query($query, $args);
       /* sending email */
-      // $user_data = user_load($proposal_data->uid);
-      // $email_to = $user_data->mail;
-      // $from = variable_get('research_migration_from_email', '');
-      // $bcc = $user->mail . ', ' . variable_get('research_migration_emails', '');
-      // $cc = variable_get('research_migration_cc_emails', '');
-      // $params['research_migration_proposal_approved']['proposal_id'] = $proposal_id;
-      // $params['research_migration_proposal_approved']['user_id'] = $proposal_data->uid;
-      // $params['research_migration_proposal_approved']['headers'] = [
-      //   'From' => $from,
-      //   'MIME-Version' => '1.0',
-      //   'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
-      //   'Content-Transfer-Encoding' => '8Bit',
-      //   'X-Mailer' => 'Drupal',
-      //   'Cc' => $cc,
-      //   'Bcc' => $bcc,
-      // ];
-      // if (!drupal_mail('research_migration', 'research_migration_proposal_approved', $email_to, language_default(), $params, $from, TRUE)) {
-      //   \Drupal::messenger()->addMessage('Error sending email message.', 'error');
-      // }
+// Load user
+$user_data = User::load($proposal_data->uid);
 
+// Email to user
+$email_to = $user_data->getEmail();
+
+// Load config
+$config = \Drupal::config('research_migration.settings');
+
+$from_email = $config->get('research_migration_from_email');
+$bcc_extra  = $config->get('research_migration_emails');
+$cc         = $config->get('research_migration_cc_emails');
+
+// Fallback safety (prevents Symfony null error)
+$site_mail = \Drupal::config('system.site')->get('mail');
+
+$from_email = !empty($from_email) ? $from_email : $site_mail;
+$cc         = !empty($cc) ? $cc : '';
+$bcc_extra  = !empty($bcc_extra) ? $bcc_extra : '';
+
+// Build Bcc (user mail + configured emails)
+$bcc = $user->getEmail();
+if (!empty($bcc_extra)) {
+  $bcc .= ', ' . $bcc_extra;
+}
+
+// Params
+$params['research_migration_proposal_approved']['proposal_id'] = $proposal_id;
+$params['research_migration_proposal_approved']['user_id'] = $proposal_data->uid;
+
+// Build headers safely
+$headers = [
+  'From' => $from_email,
+  'MIME-Version' => '1.0',
+  'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
+  'Content-Transfer-Encoding' => '8Bit',
+  'X-Mailer' => 'Drupal',
+];
+
+if (!empty($cc)) {
+  $headers['Cc'] = $cc;
+}
+
+if (!empty($bcc)) {
+  $headers['Bcc'] = $bcc;
+}
+
+$params['research_migration_proposal_approved']['headers'] = $headers;
+
+// Send mail
+$mail_manager = \Drupal::service('plugin.manager.mail');
+
+$result = $mail_manager->mail(
+  'research_migration',
+  'research_migration_proposal_approved',
+  $email_to,
+  \Drupal::languageManager()->getDefaultLanguage()->getId(),
+  $params,
+  $from_email,
+  TRUE
+);
+
+if (!$result['result']) {
+  \Drupal::messenger()->addMessage(t('Mail send successfully.'));
+}
       \Drupal::messenger()->addMessage('CFD research migration proposal No. ' . $proposal_id . ' approved. User has been notified of the approval.', 'status');
       // drupal_goto('research-migration-project/manage-proposal');
       $url = Url::fromRoute('cfd_research_migration.proposal_pending')->toString();
@@ -376,26 +421,71 @@ else {
         ];
         $result = \Drupal::database()->query($query, $args);
         /* sending email */
-        // $user_data = user_load($proposal_data->uid);
-        // $email_to = $user_data->mail;
-        // $from = variable_get('research_migration_from_email', '');
-        // $bcc = $user->mail . ', ' . variable_get('research_migration_emails', '');
-        // $cc = variable_get('research_migration_cc_emails', '');
-        // $params['research_migration_proposal_disapproved']['proposal_id'] = $proposal_id;
-        // $params['research_migration_proposal_disapproved']['user_id'] = $proposal_data->uid;
-        // $params['research_migration_proposal_disapproved']['headers'] = [
-        //   'From' => $from,
-        //   'MIME-Version' => '1.0',
-        //   'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
-        //   'Content-Transfer-Encoding' => '8Bit',
-        //   'X-Mailer' => 'Drupal',
-        //   'Cc' => $cc,
-        //   'Bcc' => $bcc,
-        // ];
-        // if (!drupal_mail('research_migration', 'research_migration_proposal_disapproved', $email_to, language_default(), $params, $from, TRUE)) {
-        //   \Drupal::messenger()->addMessage('Error sending email message.', 'error');
-        // }
 
+// Load user
+$user_data = User::load($proposal_data->uid);
+
+// Email to user
+$email_to = $user_data->getEmail();
+
+// Load config
+$config = \Drupal::config('research_migration.settings');
+
+$from_email = $config->get('research_migration_from_email');
+$bcc_extra  = $config->get('research_migration_emails');
+$cc         = $config->get('research_migration_cc_emails');
+
+// Fallback safety
+$site_mail = \Drupal::config('system.site')->get('mail');
+$from_email = !empty($from_email) ? $from_email : $site_mail;
+$cc         = !empty($cc) ? $cc : '';
+$bcc_extra  = !empty($bcc_extra) ? $bcc_extra : '';
+
+// Build Bcc (current user + configured list)
+$bcc = $user->getEmail();
+if (!empty($bcc_extra)) {
+  $bcc .= ', ' . $bcc_extra;
+}
+
+// Params
+$params['research_migration_proposal_disapproved']['proposal_id'] = $proposal_id;
+$params['research_migration_proposal_disapproved']['user_id'] = $proposal_data->uid;
+
+// Build headers safely
+$headers = [
+  'From' => $from_email,
+  'MIME-Version' => '1.0',
+  'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
+  'Content-Transfer-Encoding' => '8Bit',
+  'X-Mailer' => 'Drupal',
+];
+
+if (!empty($cc)) {
+  $headers['Cc'] = $cc;
+}
+
+if (!empty($bcc)) {
+  $headers['Bcc'] = $bcc;
+}
+
+$params['research_migration_proposal_disapproved']['headers'] = $headers;
+
+// Send mail
+$mail_manager = \Drupal::service('plugin.manager.mail');
+
+$result = $mail_manager->mail(
+  'research_migration',
+  'research_migration_proposal_disapproved',
+  $email_to,
+  \Drupal::languageManager()->getDefaultLanguage()->getId(),
+  $params,
+  $from_email,
+  TRUE
+);
+
+if (!$result['result']) {
+  \Drupal::messenger()->addMessage(t('Mail send successfully.'));
+}
         \Drupal::messenger()->addMessage('CFD research migration proposal No. ' . $proposal_id . ' dis-approved. User has been notified of the dis-approval.', 'error');
         // drupal_goto('research-migration-project/manage-proposal');
         $url = Url::fromRoute('cfd_research_migration.proposal_pending')->toString();

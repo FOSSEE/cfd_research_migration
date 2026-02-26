@@ -129,48 +129,57 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
     ];
     $form['country'] = [
       '#type' => 'select',
+      '#title' => $this->t('Country'),
+      '#options' => ['India' => 'India', 'Others' => 'Others'],
+      '#required' => TRUE,
+      ];
+      $form['other_country'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Other than India'),
+      '#states' => ['visible' => [':input[name="country"]' => ['value' => 'Others']]],
+      ];
+      
+      $form['country'] = [
+      '#type' => 'select',
       '#title' => t('Country'),
       '#options' => [
-        'India' => 'India',
-        'Others' => 'Others',
+      'India' => 'India',
+      'Others' => 'Others',
       ],
-      '#default_value' => $proposal_data->country,
       '#required' => TRUE,
       '#tree' => TRUE,
-      '#validated' => TRUE,
-    ];
-    $form['other_country'] = [
+      ];
+      $form['other_country'] = [
       '#type' => 'textfield',
-      '#title' => t('Other than India'),
-      '#size' => 100,
-      '#default_value' => $proposal_data->country,
-      '#attributes' => [
-        'placeholder' => t('Enter your country name')
-        ],
-      '#states' => [
-        'visible' => [
-          ':input[name="country"]' => [
-            'value' => 'Others'
-            ]
-          ]
-        ],
-    ];
-    $form['other_state'] = [
-      '#type' => 'textfield',
-      '#title' => t('State other than India'),
+      '#title' => t('Other Country'),
       '#size' => 100,
       '#attributes' => [
-        'placeholder' => t('Enter your state/region name')
-        ],
-      '#default_value' => $proposal_data->state,
+      'placeholder' => t('Enter your country name')
+      ],
       '#states' => [
-        'visible' => [
-          ':input[name="country"]' => [
-            'value' => 'Others'
-            ]
-          ]
-        ],
-    ];
+      'visible' => [
+      ':input[name="country"]' => [
+      'value' => 'Others'
+      ]
+      ]
+      ],
+      ];
+      $form['other_state'] = [
+      '#type' => 'textfield',
+      '#title' => t('State'),
+      '#size' => 100,
+      '#attributes' => [
+      'placeholder' => t('Enter your state/region name')
+      ],
+      '#states' => [
+      'visible' => [
+      ':input[name="country"]' => [
+      'value' => 'Others'
+      ]
+      ]
+      ],
+      ];
+    
     $form['other_city'] = [
       '#type' => 'textfield',
       '#title' => t('City other than India'),
@@ -232,14 +241,14 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
       '#required' => TRUE,
       '#default_value' => $proposal_data->project_title,
     ];
-    $version_options = _rm_list_of_versions();
+    $version_options = \Drupal::service("cfd_research_migration_global")->_rm_list_of_versions();
     $form['version'] = [
       '#type' => 'select',
       '#title' => t('Version used'),
       '#options' => $version_options,
       '#default_value' => $proposal_data->version_id,
     ];
-    $simulation_type_options = _rm_list_of_simulation_types();
+    $simulation_type_options = \Drupal::service("cfd_research_migration_global")->_rm_list_of_simulation_types();
     $form['simulation_type'] = [
       '#type' => 'select',
       '#title' => t('Simulation Type used'),
@@ -249,44 +258,78 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
         'callback' => 'ajax_solver_used_callback'
         ],
     ];
-    $simulation_id = !$form_state->getValue(['simulation_type']) ? $form_state->getValue([
-      'simulation_type'
-      ]) : $proposal_data->simulation_type_id;
+    // $simulation_id = !$form_state->getValue(['simulation_type']) ? $form_state->getValue([
+    //   'simulation_type'
+    //   ]) : $proposal_data->simulation_type_id;
 
-    $form['solver_used'] = [
-      '#type' => 'select',
-      '#title' => t('Select the Solver to be used'),
-      '#options' => _rm_list_of_solvers($simulation_id),
-      '#prefix' => '<div id="ajax-solver-replace">',
-      '#suffix' => '</div>',
-      '#states' => [
-        'invisible' => [
-          ':input[name="simulation_type"]' => [
-            'value' => 19
-            ]
-          ]
-        ],
-      //'#required' => TRUE
-        '#default_value' => $proposal_data->solver_used,
-    ];
+    // $form['solver_used'] = [
+    //   '#type' => 'select',
+    //   '#title' => t('Select the Solver to be used'),
+    //   '#options' => \Drupal::service("cfd_research_migration_global")->_rm_list_of_solvers($simulation_id),
+    //   '#prefix' => '<div id="ajax-solver-replace">',
+    //   '#suffix' => '</div>',
+    //   '#states' => [
+    //     'invisible' => [
+    //       ':input[name="simulation_type"]' => [
+    //         'value' => 19
+    //         ]
+    //       ]
+    //     ],
+    //   //'#required' => TRUE
+    //     '#default_value' => $proposal_data->solver_used,
+    // ];
 
-    $form['solver_used_text'] = [
-      '#type' => 'textfield',
-      '#title' => t('Enter the Solver to be used'),
-      '#size' => 100,
-      '#description' => t('Maximum character limit is 50'),
-      //'#required' => TRUE,
-        '#prefix' => '<div id="ajax-solver-text-replace">',
-      '#suffix' => '</div>',
-      '#states' => [
-        'visible' => [
-          ':input[name="simulation_type"]' => [
-            'value' => 19
-            ]
-          ]
-        ],
-      '#default_value' => $proposal_data->solver_used,
-    ];
+    // $form['solver_used_text'] = [
+    //   '#type' => 'textfield',
+    //   '#title' => t('Enter the Solver to be used'),
+    //   '#size' => 100,
+    //   '#description' => t('Maximum character limit is 50'),
+    //   //'#required' => TRUE,
+    //     '#prefix' => '<div id="ajax-solver-text-replace">',
+    //   '#suffix' => '</div>',
+    //   '#states' => [
+    //     'visible' => [
+    //       ':input[name="simulation_type"]' => [
+    //         'value' => 19
+    //         ]
+    //       ]
+    //     ],
+    //   '#default_value' => $proposal_data->solver_used,
+    // ];
+
+     $simulation_id = $form_state->hasValue('simulation_type') ? $form_state->getValue('simulation_type') : key($simulation_type_options);
+  
+  if ($simulation_id < 19) {
+  $form['solver_used'] = [
+  '#type' => 'select',
+  '#title' => t('Select the Solver to be used'),
+  '#options' => \Drupal::service("cfd_research_migration_global")->_rm_list_of_solvers($simulation_id),
+  '#default_value' => 0,
+  '#prefix' => '<div id="ajax-solver-replace">',
+  '#suffix' => '</div>',
+  '#states' => [
+  'invisible' => [
+  ':input[name="simulation_type"]' => ['value' => 19]
+  ]
+  ],
+  '#required' => TRUE,
+  ];
+  }
+  
+  $form['solver_used_text'] = [
+  '#type' => 'textfield',
+  '#title' => t('Enter the Solver to be used'),
+  '#size' => 100,
+  '#description' => t('Maximum character limit is 50'),
+  '#prefix' => '<div id="ajax-solver-text-replace">',
+  '#suffix' => '</div>',
+  '#states' => [
+  'visible' => [
+  ':input[name="simulation_type"]' => ['value' => 19]
+  ]
+  ],
+  ];
+ 
     /* $form['solver_used'] = array(
         '#type' => 'textfield',
         '#title' => t('Solver to be used'),
@@ -355,7 +398,7 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
       } //$proposal_data = $proposal_q->fetchObject()
       else {
         \Drupal::messenger()->addMessage(t('Invalid proposal selected. Please try again.'), 'error');
-        drupal_goto('research-migration-project/manage-proposal');
+        // drupal_goto('research-migration-project/manage-proposal');
         return;
       }
     } //$proposal_q
@@ -367,26 +410,44 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
     /* delete proposal */
     if ($form_state->getValue(['delete_proposal']) == 1) {
       /* sending email */
-      // $user_data = user_load($proposal_data->uid);
-      // $email_to = $user_data->mail;
-      // $from = variable_get('research_migration_from_email', '');
-      // $bcc = variable_get('research_migration_emails', '');
-      // $cc = variable_get('research_migration_cc_emails', '');
-      // $params['research_migration_proposal_deleted']['proposal_id'] = $proposal_id;
-      // $params['research_migration_proposal_deleted']['user_id'] = $proposal_data->uid;
-      // $params['research_migration_proposal_deleted']['headers'] = [
-      //   'From' => $from,
-      //   'MIME-Version' => '1.0',
-      //   'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
-      //   'Content-Transfer-Encoding' => '8Bit',
-      //   'X-Mailer' => 'Drupal',
-      //   'Cc' => $cc,
-      //   'Bcc' => $bcc,
-      // ];
-      // if (!drupal_mail('research_migration', 'research_migration_proposal_deleted', $email_to, user_preferred_language($user), $params, $from, TRUE)) {
-      //   \Drupal::messenger()->addMessage('Error sending email message.', 'error');
-      // }
+$user_data = User::load($proposal_data->uid);
 
+if ($user_data && $user_data->getEmail()) {
+
+  $email_to = $user_data->getEmail();
+
+  $config = \Drupal::config('research_migration.settings');
+
+  $from = $config->get('research_migration_from_email');
+  $bcc  = $config->get('research_migration_emails');
+  $cc   = $config->get('research_migration_cc_emails');
+
+  $params['research_migration_proposal_deleted']['proposal_id'] = $proposal_id;
+  $params['research_migration_proposal_deleted']['user_id'] = $proposal_data->uid;
+
+  $params['research_migration_proposal_deleted']['headers'] = [
+    'From' => $from,
+    'Cc'   => $cc,
+    'Bcc'  => $bcc,
+  ];
+
+  /** @var MailManagerInterface $mail_manager */
+  $mail_manager = \Drupal::service('plugin.manager.mail');
+
+  $result = $mail_manager->mail(
+    'research_migration',
+    'research_migration_proposal_deleted',
+    $email_to,
+    $user_data->getPreferredLangcode(),
+    $params,
+    $from,
+    TRUE
+  );
+
+  if (!$result['result']) {
+    \Drupal::messenger()->addMessage(t(' Sending email message.'));
+  }
+}
       \Drupal::messenger()->addMessage(t('research migration proposal has been deleted.'), 'status');
       if (_rm_rrmdir_project($proposal_id) == TRUE) {
         $query = db_delete('research_migration_proposal');

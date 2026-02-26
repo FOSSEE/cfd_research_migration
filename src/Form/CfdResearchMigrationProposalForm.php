@@ -29,6 +29,7 @@ use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Render\RendererInterface;
 
+
 class CfdResearchMigrationProposalForm extends FormBase {
 
   /**
@@ -460,7 +461,7 @@ elseif ($selected === '0') {
   'placeholder' => 'Insert the Journal name, title of proceedings (for conference papers) '
   )
   );
-  $version_options = _rm_list_of_versions();
+  $version_options =\Drupal::service("cfd_research_migration_global")->_rm_list_of_versions();
   $form['version'] = array(
   '#type' => 'select',
   '#title' => t('OpenFOAM Version to be used'),
@@ -765,7 +766,7 @@ function ajax_solver_used_callback(array &$form, FormStateInterface $form_state)
             $form_state->setErrorByName($file_form_name, t('File size cannot be zero.'));
           }
           /* check if valid file name */
-          if (!cfd_research_migration_check_valid_filename($_FILES['files']['name'][$file_form_name])) {
+          if (!\Drupal::service("cfd_research_migration_global")->cfd_research_migration_check_valid_filename($_FILES['files']['name'][$file_form_name])) {
             $form_state->setErrorByName($file_form_name, t('Invalid file name specified. Only alphabets and numbers are allowed as a valid filename.'));
           }
         } //$file_name
@@ -979,35 +980,78 @@ function ajax_solver_used_callback(array &$form, FormStateInterface $form_state)
     \Drupal::messenger()->addMessage(t('Error receiving your proposal. Please try again.'), 'error');
     return;
   } //!$proposal_id
-	/* sending email */
-    // $email_to = $user->mail;
-    // $form = variable_get('research_migration_from_email', '');
-    // $bcc = variable_get('research_migration_emails', '');
-    // $cc = variable_get('research_migration_cc_emails', '');
-    // $params['research_migration_proposal_received']['result1'] = $result1;
-    // $params['research_migration_proposal_received']['user_id'] = $user->uid;
-    // $params['research_migration_proposal_received']['headers'] = [
-    //   'From' => $form,
-    //   'MIME-Version' => '1.0',
-    //   'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
-    //   'Content-Transfer-Encoding' => '8Bit',
-    //   'X-Mailer' => 'Drupal',
-    //   'Cc' => $cc,
-    //   'Bcc' => $bcc,
-    // ];
-    // if (!drupal_mail('research_migration', 'research_migration_proposal_received', $email_to, user_preferred_language($user), $params, $form, TRUE)) {
-    //   \Drupal::messenger()->addMessage('Error sending email message.', 'error');
-    // }
-    // \Drupal::messenger()->addMessage(t('We have received your Research Migration proposal. We will get back to you soon.'), 'status');
-    // // drupal_goto('');
-    // $response = new RedirectResponse(Url::fromRoute('<front>')->toString());
-  
+	
+/* Sending email */
+
+// Email to user
+$email_to = $user->getEmail();
+
+// Load config
+$config = \Drupal::config('research_migration.settings');
+
+$from_email = $config->get('research_migration_from_email');
+$bcc = $config->get('research_migration_emails');
+$cc  = $config->get('research_migration_cc_emails');
+
+// Fallback safety (prevents Symfony null error)
+$site_mail = \Drupal::config('system.site')->get('mail');
+$from_email = !empty($from_email) ? $from_email : $site_mail;
+$cc  = !empty($cc)  ? $cc  : '';
+$bcc = !empty($bcc) ? $bcc : '';
+
+// Build headers safely
+$headers = [
+  'From' => $from_email,
+  'MIME-Version' => '1.0',
+  'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
+  'Content-Transfer-Encoding' => '8Bit',
+  'X-Mailer' => 'Drupal',
+];
+
+if (!empty($cc)) {
+  $headers['Cc'] = $cc;
+}
+
+if (!empty($bcc)) {
+  $headers['Bcc'] = $bcc;
+}
+
+// Params
+$params['research_migration_proposal_received']['result1'] = $result1;
+$params['research_migration_proposal_received']['user_id'] = $user->id();
+$params['research_migration_proposal_received']['headers'] = $headers;
+
+// Send mail
+$mail_manager = \Drupal::service('plugin.manager.mail');
+
+$result = $mail_manager->mail(
+  'research_migration',
+  'research_migration_proposal_received',
+  $email_to,
+  $user->getPreferredLangcode(),
+  $params,
+  $from_email,
+  TRUE
+);
+
+// Status message
+if (!$result['result']) {
+  \Drupal::messenger()->addMessage(t('Mail send successfully'));
+}
+else {
+  \Drupal::messenger()->addStatus(t('We have received your Research Migration proposal. We will get back to you soon.'));
+}
+
+// Redirect
+$response = new RedirectResponse(Url::fromRoute('<front>')->toString());
+$response->send();
+exit;
      
 
-  \Drupal::messenger()->addMessage(t('We have received your Research Migration proposal. We will get back to you soon.'), 'status');
+  // \Drupal::messenger()->addMessage(t('We have received your Research Migration proposal. We will get back to you soon.'), 'status');
 
   // Redirect properly
-  $form_state->setRedirect('<front>');
+  // $form_state->setRedirect('<front>');
 
 
 

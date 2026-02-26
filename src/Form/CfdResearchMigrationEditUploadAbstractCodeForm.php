@@ -157,7 +157,7 @@ Url::fromUserInput('/research-migration-project/abstract-code/edit-upload-files'
           }
 
           /* check if valid file name */
-          if (!cfd_research_migration_check_valid_filename($_FILES['files']['name'][$file_form_name])) {
+          if (!\Drupal::service("cfd_research_migration_global")->cfd_research_migration_check_valid_filename($_FILES['files']['name'][$file_form_name])) {
             $form_state->setErrorByName($file_form_name, t('Invalid file name specified. Only alphabets and numbers are allowed as a valid filename.'));
           }
 
@@ -240,32 +240,62 @@ Url::fromUserInput('/research-migration-project/abstract-code/edit-upload-files'
       }
     } //$_FILES['files']['name'] as $file_form_name => $file_name
     /* sending email */
-    // $email_to = $user->mail;
-    // $from = variable_get('research_migration_from_email', '');
-    // $bcc = variable_get('research_migration_emails', '');
-    // $cc = variable_get('research_migration_cc_emails', '');
-    // $params['abstract_edit_file_uploaded']['proposal_id'] = $proposal_id;
-    // $params['abstract_edit_file_uploaded']['user_id'] = $user->uid;
-    // $params['abstract_edit_file_uploaded']['abs_file'] = $abs_file_name;
-    // $params['abstract_edit_file_uploaded']['proj_file'] = $proj_file_name;
-    // $params['abstract_edit_file_uploaded']['headers'] = [
-    //   'From' => $from,
-    //   'MIME-Version' => '1.0',
-    //   'Content-Type' => 'text/plain; charset=UTF-8; format=flowed; delsp=yes',
-    //   'Content-Transfer-Encoding' => '8Bit',
-    //   'X-Mailer' => 'Drupal',
-    //   'Cc' => $cc,
-    //   'Bcc' => $bcc,
-    // ];
-    // if (!drupal_mail('research_migration', 'abstract_edit_file_uploaded', $email_to, language_default(), $params, $from, TRUE)) {
-    //   \Drupal::messenger()->addMessage('Error sending email message.', 'error');
-    // }
-    // drupal_goto('research  -migration-project/abstract-code/edit-upload-files');
-$form_state->setRedirect(
-  'cfd_research_migration.edit_upload_abstract_code_form',
-  ['proposal_id' => $v['prop_id']]
-);
+    
+$user_data = User::load($user->id());
+
+if ($user_data && $user_data->getEmail()) {
+
+  $email_to = $user_data->getEmail();
+
+  $config = \Drupal::config('research_migration.settings');
+  $site_mail = \Drupal::config('system.site')->get('mail');
+
+  // NEVER allow NULL mail headers in Drupal 10
+  $from = $config->get('research_migration_from_email') ?: $site_mail;
+  $cc   = $config->get('research_migration_cc_emails') ?: '';
+  $bcc  = $config->get('research_migration_emails') ?: '';
+
+  $params['abstract_edit_file_uploaded']['proposal_id'] = $proposal_id;
+  $params['abstract_edit_file_uploaded']['user_id'] = $user_data->id();
+  $params['abstract_edit_file_uploaded']['abs_file'] = $abs_file_name;
+  $params['abstract_edit_file_uploaded']['proj_file'] = $proj_file_name;
+
+  $params['abstract_edit_file_uploaded']['headers'] = [
+    'From' => $from,
+  ];
+
+  if (!empty($cc)) {
+    $params['abstract_edit_file_uploaded']['headers']['Cc'] = $cc;
   }
+
+  if (!empty($bcc)) {
+    $params['abstract_edit_file_uploaded']['headers']['Bcc'] = $bcc;
+  }
+
+  /** @var \Drupal\Core\Mail\MailManagerInterface $mail_manager */
+  $mail_manager = \Drupal::service('plugin.manager.mail');
+
+  $result = $mail_manager->mail(
+    'research_migration',
+    'abstract_edit_file_uploaded',
+    $email_to,
+    $user_data->getPreferredLangcode(),
+    $params,
+    $from,
+    TRUE
+  );
+
+  if (!$result['result']) {
+    \Drupal::messenger()->addError(t('Error sending email message.'));
+  }
+}
+/* Redirect */
+return new RedirectResponse(
+  Url::fromRoute(
+    'cfd_research_migration.edit_upload_abstract_code_form',
+    ['proposal_id' => $proposal_id]
+  )->toString()
+);  }
 
 }
 ?>
