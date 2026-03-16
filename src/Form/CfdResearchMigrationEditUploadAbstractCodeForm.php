@@ -33,7 +33,6 @@ class CfdResearchMigrationEditUploadAbstractCodeForm extends FormBase {
     /* get current proposal */
     // $proposal_id = (int) arg(3);
     $route_match = \Drupal::routeMatch();
-
     $proposal_id = (int) $route_match->getParameter('proposal_id');
     $uid = $user->uid;
     $query = \Drupal::database()->select('research_migration_proposal');
@@ -173,6 +172,9 @@ Url::fromUserInput('/research-migration-project/abstract-code/edit-upload-files'
 
   public function submitForm(array &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
     $user = \Drupal::currentUser();
+        $route_match = \Drupal::routeMatch();
+    $proposal_id = (int) $route_match->getParameter('proposal_id');
+
     $v = $form_state->getValues();
     $root_path = \Drupal::service("cfd_research_migration_global")->cfd_research_migration_path();
     $query = \Drupal::database()->select('research_migration_proposal');
@@ -290,12 +292,13 @@ if ($user_data && $user_data->getEmail()) {
   }
 }
 /* Redirect */
-return new RedirectResponse(
-  Url::fromRoute(
-    'cfd_research_migration.edit_upload_abstract_code_form',
-    ['proposal_id' => $proposal_id]
-  )->toString()
-);  }
 
+$url = Url::fromRoute(
+  'cfd_research_migration.edit_upload_abstract_code_form',
+  // ['proposal_id' => $proposal_id]
+);
+
+return new RedirectResponse($url->toString());
+}
 }
 ?>

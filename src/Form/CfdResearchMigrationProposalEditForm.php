@@ -71,7 +71,7 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
     $form['contributor_name'] = [
       '#type' => 'textfield',
       '#title' => t('Name of the Proposer'),
-      '#size' => 30,
+      //#size' => 30,
       '#maxlength' => 50,
       '#required' => TRUE,
       '#default_value' => $proposal_data->contributor_name,
@@ -84,7 +84,7 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
     $form['university'] = [
       '#type' => 'textfield',
       '#title' => t('University/Institute'),
-      '#size' => 200,
+      //#size' => 200,
       '#maxlength' => 200,
       '#required' => TRUE,
       '#default_value' => $proposal_data->university,
@@ -92,7 +92,7 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
     $form['institute'] = [
       '#type' => 'textfield',
       '#title' => t('Institute'),
-      '#size' => 80,
+      //#size' => 80,
       '#maxlength' => 200,
       '#required' => TRUE,
       '#default_value' => $proposal_data->institute,
@@ -106,7 +106,7 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
     $form['faculty_name'] = [
       '#type' => 'textfield',
       '#title' => t('Name of the Faculty'),
-      '#size' => 50,
+      //#size' => 50,
       '#maxlength' => 50,
       '#validated' => TRUE,
       '#default_value' => $proposal_data->faculty_name,
@@ -114,7 +114,7 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
     $form['faculty_department'] = [
       '#type' => 'textfield',
       '#title' => t('Department of the Faculty'),
-      '#size' => 50,
+      //#size' => 50,
       '#maxlength' => 50,
       '#validated' => TRUE,
       '#default_value' => $proposal_data->faculty_department,
@@ -122,7 +122,7 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
     $form['faculty_email'] = [
       '#type' => 'textfield',
       '#title' => t('Email id of the Faculty'),
-      '#size' => 255,
+      //#size' => 255,
       '#maxlength' => 255,
       '#validated' => TRUE,
       '#default_value' => $proposal_data->faculty_email,
@@ -152,7 +152,7 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
       $form['other_country'] = [
       '#type' => 'textfield',
       '#title' => t('Other Country'),
-      '#size' => 100,
+      //#size' => 100,
       '#attributes' => [
       'placeholder' => t('Enter your country name')
       ],
@@ -167,7 +167,7 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
       $form['other_state'] = [
       '#type' => 'textfield',
       '#title' => t('State'),
-      '#size' => 100,
+      //#size' => 100,
       '#attributes' => [
       'placeholder' => t('Enter your state/region name')
       ],
@@ -183,7 +183,7 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
     $form['other_city'] = [
       '#type' => 'textfield',
       '#title' => t('City other than India'),
-      '#size' => 100,
+      //#size' => 100,
       '#attributes' => [
         'placeholder' => t('Enter your city name')
         ],
@@ -226,7 +226,7 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
     $form['pincode'] = [
       '#type' => 'textfield',
       '#title' => t('Pincode'),
-      '#size' => 30,
+      //#size' => 30,
       '#maxlength' => 6,
       '#default_value' => $proposal_data->pincode,
       '#attributes' => [
@@ -236,7 +236,7 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
     $form['project_title'] = [
       '#type' => 'textfield',
       '#title' => t('Title of the Research Migration Project'),
-      '#size' => 300,
+      //#size' => 300,
       '#maxlength' => 350,
       '#required' => TRUE,
       '#default_value' => $proposal_data->project_title,
@@ -319,7 +319,7 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
   $form['solver_used_text'] = [
   '#type' => 'textfield',
   '#title' => t('Enter the Solver to be used'),
-  '#size' => 100,
+  //#size' => 100,
   '#description' => t('Maximum character limit is 50'),
   '#prefix' => '<div id="ajax-solver-text-replace">',
   '#suffix' => '</div>',
@@ -333,7 +333,7 @@ class CfdResearchMigrationProposalEditForm extends FormBase {
     /* $form['solver_used'] = array(
         '#type' => 'textfield',
         '#title' => t('Solver to be used'),
-        '#size' => 50,
+        //#size' => 50,
         '#maxlength' => 50,
         '#required' => true,
         '#default_value' => $proposal_data->solver_used,
