@@ -12,6 +12,8 @@ cfd_research_migration.manage_lecture_videos:
     _controller: '\Drupal\cfd_research_migration\Controller\DefaultController::manage_lecture_videos'
   requirements:
     _permission: 'manage lecture videos'
+  options:
+    no_cache: TRUE
 cfd_research_migration.view_lecture_videos:
   path: /lecture-videos
   defaults:
@@ -19,6 +21,8 @@ cfd_research_migration.view_lecture_videos:
     _controller: '\Drupal\cfd_research_migration\Controller\DefaultController::view_lecture_videos'
   requirements:
     _permission: 'view lecture videos'
+  options:
+    no_cache: TRUE
 cfd_research_migration.edit_lecture_videos_form:
   path: /lecture-videos/edit/{video_id?}
   defaults:
@@ -47,6 +51,8 @@ cfd_research_migration.proposal_pending:
     _controller: '\Drupal\cfd_research_migration\Controller\DefaultController::cfd_research_migration_proposal_pending'
   requirements:
     _permission: 'Research Migration manage proposal'
+  options:
+    no_cache: TRUE
 cfd_research_migration.proposal_all:
   path: /research-migration-project/manage-proposal/all
   defaults:
@@ -54,6 +60,8 @@ cfd_research_migration.proposal_all:
     _controller: '\Drupal\cfd_research_migration\Controller\DefaultController::cfd_research_migration_proposal_all'
   requirements:
     _permission: 'Research Migration manage proposal'
+  options:
+    no_cache: TRUE
 cfd_research_migration.proposal_edit_file_all:
   path: /research-migration-project/manage-proposal/edit-upload-file
   defaults:
@@ -61,6 +69,8 @@ cfd_research_migration.proposal_edit_file_all:
     _controller: '\Drupal\cfd_research_migration\Controller\DefaultController::cfd_research_migration_proposal_edit_file_all'
   requirements:
     _permission: 'Research Migration manage proposal'
+  options:
+    no_cache: TRUE
 cfd_research_migration.proposal_approval_form:
   path: /research-migration-project/manage-proposal/approve/{id?}
   defaults:
@@ -90,7 +100,7 @@ cfd_research_migration.abstract_bulk_approval_form:
   requirements:
     _permission: 'Research Migration bulk manage abstract'
 cfd_research_migration.edit_upload_abstract_code_form:
-  path: /research-migration-project/abstract-code/edit-upload-files/{proposal_id}
+  path: /research-migration-project/abstract-code/edit-upload-files
   defaults:
     _title: 'Research Migration Project Directory edit uploaded files for proposal'
     _form: \Drupal\cfd_research_migration\Form\CfdResearchMigrationEditUploadAbstractCodeForm
@@ -103,6 +113,8 @@ cfd_research_migration.abstract:
     _controller: '\Drupal\cfd_research_migration\Controller\DefaultController::cfd_research_migration_abstract'
   requirements:
     _permission: 'Research Migration upload abstract'
+  options:
+    no_cache: TRUE
 cfd_research_migration.upload_abstract_code_form:
   path: /research-migration-project/abstract-code/upload
   defaults:
@@ -123,6 +135,8 @@ cfd_research_migration.download_full_project:
     _controller: '\Drupal\cfd_research_migration\Controller\DefaultController::cfd_research_migration_download_full_project'
   requirements:
     _permission: 'Research Migration download code'
+  options:
+    no_cache: TRUE
 cfd_research_migration.completed_proposals_all:
   path: /research-migration-project/completed-research-migration
   defaults:
@@ -130,6 +144,8 @@ cfd_research_migration.completed_proposals_all:
     _controller: '\Drupal\cfd_research_migration\Controller\DefaultController::cfd_research_migration_completed_proposals_all'
   requirements:
     _permission: 'Research Migration download code'
+  options:
+    no_cache: TRUE
 cfd_research_migration.progress_all:
   path: /research-migration-project/research-migration-progress
   defaults:
@@ -137,6 +153,8 @@ cfd_research_migration.progress_all:
     _controller: '\Drupal\cfd_research_migration\Controller\DefaultController::cfd_research_migration_progress_all'
   requirements:
     _permission: 'Research Migration download code'
+  options:
+    no_cache: TRUE
 cfd_research_migration.list_of_available_project_titles:
   path: /research-migration-project/list-of-project-titles
   defaults:
@@ -144,6 +162,8 @@ cfd_research_migration.list_of_available_project_titles:
     _controller: '\Drupal\cfd_research_migration\Controller\DefaultController::list_of_available_project_titles'
   requirements:
     _permission: 'Research Migration Project titles list'
+  options:
+    no_cache: TRUE
 cfd_research_migration.run_form:
   path: /research-migration-project/research-migration-run/{url_research_migration_id}
   defaults:
@@ -164,6 +184,8 @@ cfd_research_migration.download_research_migration_project_title_files:
     _controller: '\Drupal\cfd_research_migration\Controller\DefaultController::download_research_migration_project_title_files'
   requirements:
     _permission: 'download code'
+  options:
+    no_cache: TRUE
 cfd_research_migration.project_files:
   path: /research-migration-project/download/project-file/{proposal_id?}
   defaults:
@@ -171,6 +193,8 @@ cfd_research_migration.project_files:
     _controller: '\Drupal\cfd_research_migration\Controller\DefaultController::cfd_research_migration_project_files'
   requirements:
     _permission: 'download code'
+  options:
+    no_cache: TRUE
 cfd_research_migration.settings_form:
   path: /admin/settings/research-migration
   defaults:
@@ -185,6 +209,8 @@ cfd_research_migration._list_research_migration_certificates:
     _controller: '\Drupal\cfd_research_migration\Controller\DefaultController::_list_research_migration_certificates'
   requirements:
     _permission: 'list Research Migration certificates'
+  options:
+    no_cache: TRUE
 cfd_research_migration.generate_pdf:
   path: /research-migration-project/certificates/generate-pdf
   defaults:
@@ -200,3 +226,5 @@ cfd_research_migration.verify_certificates_verify_certificates:
     _controller: '\Drupal\cfd_research_migration\Controller\DefaultController::verify_certificates'
   requirements:
     _permission: 'verify rm certificates'
+  options:
+    no_cache: TRUE
