@@ -23,6 +23,8 @@ use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Render\Renderer;
+use Drupal\Core\Cache\CacheableMetadata;
+use Drupal\Core\Cache\Cache;
 
 class CfdResearchMigrationAbstractBulkApprovalForm extends FormBase {
 
@@ -244,82 +246,63 @@ function _research_migration_details($research_migration_proposal_id) {
             $experiment_list = '';
             while ($abstract_data = $abstracts_q->fetchObject()) {
               \Drupal::database()->query("UPDATE {research_migration_submitted_abstracts} SET abstract_approval_status = 1, is_submitted = 1, approver_uid = :approver_uid WHERE id = :id", [
-                ':approver_uid' => $user->uid,
+                ':approver_uid' => $user->id(),
                 ':id' => $abstract_data->id,
               ]);
               \Drupal::database()->query("UPDATE {research_migration_submitted_abstracts_file} SET file_approval_status = 1, approvar_uid = :approver_uid WHERE submitted_abstract_id = :submitted_abstract_id", [
-                ':approver_uid' => $user->uid,
+                ':approver_uid' => $user->id(),
                 ':submitted_abstract_id' => $abstract_data->id,
               ]);
             } //$abstract_data = $abstracts_q->fetchObject()
             \Drupal::messenger()->addMessage($this->t('Approved Research Migration project.'), 'status');
             // email 
 
-/** Prepare subject */
-$email_subject = t('[@site][Research Migration Project] Your uploaded Research Migration project has been approved', [
-  '@site' => \Drupal::config('system.site')->get('name'),
-]);
 
 /** Prepare body */
-$email_body = t('
-Dear @user_name,
 
-Your uploaded project files for the Research Migration project have been approved.
-
-Title of Research Migration project : @title
-
-Best Wishes,
-
-@site Team,
-FOSSEE, IIT Bombay
-', [
-  '@site' => \Drupal::config('system.site')->get('name'),
-  '@user_name' => $user_data->getDisplayName(),
-  '@title' => $user_info->project_title,
-]);
-
-/** Mail parameters */
-$params = [];
-$params['subject'] = $email_subject;
-$params['body'] = $email_body;
-
-/** Recipients */
+/** Subject */
 $email_to = $user_data->getEmail();
-$from = \Drupal::config('research_migration.settings')->get('research_migration_from_email');
-$cc = \Drupal::config('research_migration.settings')->get('research_migration_cc_emails');
-$bcc = \Drupal::config('research_migration.settings')->get('research_migration_emails');
 
-$params['headers'] = [
-  'From' => $from,
-  'Cc' => $cc,
-  'Bcc' => $bcc,
-  'MIME-Version' => '1.0',
-  'Content-Type' => 'text/plain; charset=UTF-8',
-  'Content-Transfer-Encoding' => '8Bit',
-  'X-Mailer' => 'Drupal',
+$config = \Drupal::config('research_migration.settings');
+
+$from = $config->get('research_migration_from_email') ?: \Drupal::config('system.site')->get('mail');
+
+$params = [];
+$params = [];
+
+$params['abstract_approval'] = [
+  'proposal_id' => $form_state->getValue(['research_migration_project']),
+  'user_id' => $user_info->uid,
+  'headers' => [
+    'From' => $from,
+    'MIME-Version' => '1.0',
+    'Content-Type' => 'text/plain; charset=UTF-8',
+  ],
 ];
-
 /** Send mail */
 $mail_manager = \Drupal::service('plugin.manager.mail');
 $langcode = \Drupal::currentUser()->getPreferredLangcode();
 
 $result = $mail_manager->mail(
   'research_migration',
-  'standard',
+  'abstract_approval', // 👈 NEW CASE
   $email_to,
   $langcode,
   $params,
   $from,
   TRUE
 );
-
+/** Handle result */
 if (!$result['result']) {
-  \Drupal::messenger()->addError(t('Error sending email message.'));
+  \Drupal::messenger()->addMessage(t(' Sending email message.'));
 }
 else {
   \Drupal::messenger()->addStatus(t('Approval email sent successfully.'));
-}          } //$form_state['values']['research_migration_actions'] == 1
-          elseif ($form_state->getValue(['research_migration_actions']) == 2) {
+}          }
+ //$form_state['values']['research_migration_actions'] == 1
+          elseif 
+          ($form_state->getValue(['research_migration_actions']) == 2) 
+          {
             //pending review entire project 
             $query = \Drupal::database()->select('research_migration_submitted_abstracts');
             $query->fields('research_migration_submitted_abstracts');
@@ -400,7 +383,7 @@ $result = $mail_manager->mail(
 );
 
 if (!$result['result']) {
-  \Drupal::messenger()->addError(t('Error sending email message.'));
+  \Drupal::messenger()->addMessage(t(' Sending email message.'));
 }
 else {
   \Drupal::messenger()->addStatus(t('Pending status email sent successfully.'));
@@ -424,8 +407,8 @@ else {
               \Drupal::messenger()->addMessage(t('Dis-Approved and Deleted Entire Research Migration project.'), 'status');
 
 /** Prepare subject */
-$email_subject = t('[!site_name][Research Migration Project] Your uploaded Research Migration project has been marked as dis-approved', [
-  '!site_name' => \Drupal::config('system.site')->get('name'),
+$email_subject = t('[@site][Research Migration Project] Your uploaded Research Migration project has been marked as dis-approved', [
+  '@site' => \Drupal::config('system.site')->get('name'),
 ]);
 
 /** Prepare body */
@@ -483,7 +466,7 @@ $result = $mail_manager->mail(
 );
 
 if (!$result['result']) {
-  \Drupal::messenger()->addError(t('Error sending email message.'));
+  \Drupal::messenger()->addMessage(t(' Sending email message.'));
 }
 else {
   \Drupal::messenger()->addStatus(t('Dis-approval email sent successfully.'));
@@ -492,5 +475,6 @@ else {
  }
         }}
     }}
+
 }
 ?>
