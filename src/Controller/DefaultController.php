@@ -925,7 +925,7 @@ public function cfd_research_migration_download_full_project() {
 
     if ($file_count === 0) {
         \Drupal::messenger()->addError("There are no research migration project files in this proposal to download.");
-        return new \Symfony\Component\HttpFoundation\RedirectResponse(Url::fromRoute('cfd_research_migration.download_full_project')->toString());
+        return new \Symfony\Component\HttpFoundation\RedirectResponse(Url::fromRoute('cfd_research_migration.completed_proposals_all')->toString());
     }
 
     // Return zip file as BinaryFileResponse
@@ -1269,7 +1269,7 @@ $link = Link::fromTextAndUrl('Click Here', $url)->toString();
   public function cfd_research_migration_project_files() {
     $route_match = \Drupal::routeMatch();
     $proposal_id = (int) $route_match->getParameter('proposal_id');
-
+// var_dump($proposal_id);die;
     $root_path = \Drupal::service("cfd_research_migration_global")->cfd_research_migration_path();
 
     // Get the abstract file

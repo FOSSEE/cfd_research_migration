@@ -398,7 +398,64 @@ case 'research_migration_proposal_completed':
 
   break;
 
+case 'abstract_approval':
 
+  // Load proposal data
+  $database = \Drupal\Core\Database\Database::getConnection();
+  $query = $database->select('research_migration_proposal', 'r');
+  $query->fields('r');
+  $query->condition('id', $params['abstract_approval']['proposal_id']);
+  $query->range(0, 1);
+  $proposal_data = $query->execute()->fetchObject();
+
+  // Load user safely
+  $uid = $params['abstract_approval']['user_id'] ?? NULL;
+  $user_data = $uid ? \Drupal\user\Entity\User::load($uid) : NULL;
+
+  if (!$user_data) {
+    \Drupal::logger('research_migration')->error(
+      'abstract_approval mail: invalid or missing UID: @uid',
+      ['@uid' => $uid]
+    );
+    return;
+  }
+
+  // Headers
+  $message['headers'] = $params['abstract_approval']['headers'] ?? [];
+
+  // Subject
+  $site_name = \Drupal::config('system.site')->get('name');
+
+  $message['subject'] = t(
+    '[@site][Research Migration Project] Your abstract has been approved',
+    ['@site' => $site_name],
+    ['langcode' => $language]
+  );
+
+  // Body
+  $message['body'][] = t(
+    '
+Dear @user_name,
+
+Your submitted abstract for the Research Migration Project has been approved.
+
+Project Title: ' . $proposal_data->project_title . '
+
+You can now proceed with the next phase of your project submission.
+
+Best Wishes,
+
+@site Team,
+FOSSEE, IIT Bombay',
+    [
+      '@site' => $site_name,
+      '@user_name' => $user_data->getDisplayName(),
+    ],
+    ['langcode' => $language]
+  );
+
+  break;
+  
 case 'research_migration_proposal_deleted':
 
   $database = Database::getConnection();
@@ -469,11 +526,16 @@ case 'research_migration_proposal_deleted':
 
     case 'standard':
       $message['subject'] = $params['subject'];
-      $message['body'][] = $params['body'];
+      $message['body'] = $params['body'];
+
       if (!empty($params['headers'])) {
-        $message['headers'] = $params['headers'];
-      }
+        foreach ($params['headers'] as $name => $value) {
+          $message['headers'][$name] = $value;
+        }
+      
       break;
-  }
-}
+         } 
+           } 
+            }
+
   
