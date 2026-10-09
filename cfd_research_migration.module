@@ -399,7 +399,7 @@ case 'research_migration_proposal_completed':
   break;
 
 case 'abstract_approval':
-
+//var_dump("hi");die;
   // Load proposal data
   $database = \Drupal\Core\Database\Database::getConnection();
   $query = $database->select('research_migration_proposal', 'r');
@@ -407,7 +407,7 @@ case 'abstract_approval':
   $query->condition('id', $params['abstract_approval']['proposal_id']);
   $query->range(0, 1);
   $proposal_data = $query->execute()->fetchObject();
-
+//var_dump($proposal_data);die;
   // Load user safely
   $uid = $params['abstract_approval']['user_id'] ?? NULL;
   $user_data = $uid ? \Drupal\user\Entity\User::load($uid) : NULL;
@@ -456,43 +456,98 @@ FOSSEE, IIT Bombay',
 
   break;
   
-case 'research_migration_proposal_deleted':
 
-  $database = Database::getConnection();
-
-  // Load proposal data.
-  $query = $database->select('research_migration_proposal', 'r')
-    ->fields('r')
-    ->condition('id', $params['research_migration_proposal_deleted']['proposal_id'])
-    ->range(0, 1);
-
+  case 'abstract_pending':
+//var_dump("hi");die;
+  // Load proposal data
+  $database = \Drupal\Core\Database\Database::getConnection();
+  $query = $database->select('research_migration_proposal', 'r');
+  $query->fields('r');
+  $query->condition('id', $params['abstract_approval']['proposal_id']);
+  $query->range(0, 1);
   $proposal_data = $query->execute()->fetchObject();
+//var_dump($proposal_data);die;
+  // Load user safely
+  $uid = $params['abstract_pending']['user_id'] ?? NULL;
+  $user_data = $uid ? \Drupal\user\Entity\User::load($uid) : NULL;
 
-  if (!$proposal_data) {
-    \Drupal::logger('cfd_research_migration')->error('Invalid proposal id: @id', [
-      '@id' => $params['research_migration_proposal_deleted']['proposal_id'],
-    ]);
+  if (!$user_data) {
+    \Drupal::logger('research_migration')->error(
+      'abstract_approval mail: invalid or missing UID: @uid',
+      ['@uid' => $uid]
+    );
+    return;
+  }
+
+  // Headers
+  $message['headers'] = $params['abstract_pending']['headers'] ?? [];
+
+  // Subject
+  $site_name = \Drupal::config('system.site')->get('name');
+
+  $message['subject'] = t(
+    '[@site][Research Migration Project] Your abstract has been pending',
+    ['@site' => $site_name],
+    ['langcode' => $language]
+  );
+
+  // Body
+  $message['body'][] = t(
+    '
+Dear @user_name,
+
+Your submitted abstract for the Research Migration Project has been pending.
+
+Project Title: ' . $proposal_data->project_title . '
+
+
+Best Wishes,
+
+@site Team,
+FOSSEE, IIT Bombay',
+    [
+      '@site' => $site_name,
+      '@user_name' => $user_data->getDisplayName(),
+    ],
+    ['langcode' => $language]
+  );
+
+  break;
+
+ case 'research_migration_proposal_deleted':
+
+  $database = \Drupal::database();
+  $proposal_id = $params['research_migration_proposal_deleted']['proposal_id'] ?? NULL;
+  $uid = $params['research_migration_proposal_deleted']['user_id'] ?? NULL;
+
+  // Load user
+  $user = $uid ? \Drupal\user\Entity\User::load($uid) : NULL;
+  if (!$user) {
+    \Drupal::logger('cfd_research_migration')->error('Invalid user id: @id', ['@id' => $uid]);
     break;
   }
 
-  // Load user entity.
-  $user = User::load($params['research_migration_proposal_deleted']['user_id']);
+  // Query proposal data (must exist before deletion)
+  $query = $database->select('research_migration_proposal', 'r')
+    ->fields('r')
+    ->condition('id', $proposal_id)
+    ->range(0, 1);
+  $proposal_data = $query->execute()->fetchObject();
 
-  if (!$user) {
-    \Drupal::logger('cfd_research_migration')->error('Invalid user id: @id', [
-      '@id' => $params['research_migration_proposal_deleted']['user_id'],
-    ]);
+  if (!$proposal_data) {
+    \Drupal::logger('cfd_research_migration')->error('Proposal ID @id not found during email generation.', ['@id' => $proposal_id]);
     break;
   }
 
   $site_name = \Drupal::config('system.site')->get('name');
-
   $message['headers'] = $params['research_migration_proposal_deleted']['headers'] ?? [];
 
   $message['subject'] = t(
     '[@site][Research Migration Project] Your Research Migration Project proposal has been deleted',
     ['@site' => $site_name]
   );
+
+  $reason = $params['research_migration_proposal_deleted']['reason'] ?? '';
 
   $message['body'][] = t(
     "Dear @user_name,\n\n" .
@@ -504,6 +559,7 @@ case 'research_migration_proposal_deleted':
     "State: @state\n" .
     "Country: @country\n" .
     "Project Title: @project_title\n\n" .
+    "Reason for Disapproval: @reason\n\n" .
     "You can propose a new Research Migration Project.\n\n" .
     "Best Wishes,\n\n" .
     "@site_name Team,\n" .
@@ -511,31 +567,29 @@ case 'research_migration_proposal_deleted':
     [
       '@site_name'     => $site_name,
       '@user_name'     => $user->getDisplayName(),
-      '@full_name'     => trim($proposal_data->name_title . ' ' . $proposal_data->contributor_name),
+      '@full_name'     => trim(($proposal_data->name_title ?? '') . ' ' . ($proposal_data->contributor_name ?? '')),
       '@email'         => $user->getEmail(),
-      '@university'    => $proposal_data->university,
-      '@city'          => $proposal_data->city,
-      '@state'         => $proposal_data->state,
-      '@country'       => $proposal_data->country,
-      '@project_title'=> $proposal_data->project_title,
+      '@university'    => $proposal_data->university ?? 'N/A',
+      '@city'          => $proposal_data->city ?? 'N/A',
+      '@state'         => $proposal_data->state ?? 'N/A',
+      '@country'       => $proposal_data->country ?? 'N/A',
+      '@project_title' => $proposal_data->project_title ?? 'N/A',
+      '@reason'        => $reason,
     ]
   );
 
   break;
+  
+case 'standard':
+  $message['subject'] = $params['subject'] ?? '';
+  $message['body'] = is_array($params['body'] ?? []) ? $params['body'] : [$params['body']];
 
-
-    case 'standard':
-      $message['subject'] = $params['subject'];
-      $message['body'] = $params['body'];
-
-      if (!empty($params['headers'])) {
-        foreach ($params['headers'] as $name => $value) {
-          $message['headers'][$name] = $value;
-        }
-      
-      break;
-         } 
-           } 
+  if (!empty($params['headers'])) {
+    foreach ($params['headers'] as $name => $value) {
+      $message['headers'][$name] = $value;
+    }
+  }
+  break;           } 
             }
 
   
